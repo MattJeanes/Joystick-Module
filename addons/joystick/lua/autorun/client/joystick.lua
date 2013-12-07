@@ -59,7 +59,9 @@ if type(joystick) == "table" and joystick._restart then
 	oldjoystickrestart = joystick._restart
 end
 
-pcall( function() require("joystick") end )
+if file.Exists("lua/bin/gmcl_joystick_win32.dll", "GAME") then
+	require("joystick")
+end
 
 if type(joystick) ~= "table" then
 	print( "Joystick module is not properly installed!" )
