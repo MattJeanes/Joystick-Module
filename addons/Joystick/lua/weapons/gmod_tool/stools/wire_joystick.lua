@@ -1,3 +1,4 @@
+TOOL.Tab			= "Wire"
 TOOL.Category		= "Input, Output"
 TOOL.Name			= "Joystick"
 TOOL.Command		= nil
