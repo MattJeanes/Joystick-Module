@@ -1,4 +1,4 @@
-TOOL.Category		= "Wire - I/O"
+TOOL.Category		= "Input, Output"
 TOOL.Name			= "Joystick Multi"
 TOOL.Command		= nil
 TOOL.ConfigName		= ""
