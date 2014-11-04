@@ -3206,7 +3206,7 @@ jcon.whitegui = [[
 
 jcon.genwhitegui = function(caption)
 	local frame = vgui.Create("DFrame")
-	frame:LoadControlsFromString(string.gsub(jcon.whitegui,"%%TITLE%%",caption))
+	--frame:LoadControlsFromString(string.gsub(jcon.whitegui,"%%TITLE%%",caption))
 	frame:SetTitle( caption )
 	frame:MakePopup()
 	return frame
