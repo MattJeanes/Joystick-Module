@@ -195,7 +195,7 @@ function TOOL:Reload( trace )
 		self:SetStage(1)
 		return true
 	elseif self:GetStage() == 1 then
-		if self.PodCont:GetTable().pl ~= self:GetOwner() then
+		if not self.PodCont:GetTable() or self.PodCont:GetTable().pl ~= self:GetOwner() then
 			return false
 		end
 		if trace.Entity.GetPassenger then
