@@ -1,8 +1,8 @@
-TOOL.Tab			= "Wire"
-TOOL.Category		= "Input, Output"
-TOOL.Name			= "Joystick Multi"
-TOOL.Command		= nil
-TOOL.ConfigName		= ""
+TOOL.Tab        = "Wire"
+TOOL.Category   = "Input, Output"
+TOOL.Name       = "Joystick Multi"
+TOOL.Command    = nil
+TOOL.ConfigName = ""
 
 if ( CLIENT ) then
 	language.Add( "tool.wire_joystick_multi.name", "Joystick Multi Tool (Wire)" )
@@ -22,11 +22,11 @@ TOOL.Model = "models/jaanus/wiretool/wiretool_range.mdl"
 
 for i = 1,8 do
 	local strI = tostring(i)
-	TOOL.ClientConVar[strI.."uid"] = ""
-	TOOL.ClientConVar[strI.."analog"] = ""
-	TOOL.ClientConVar[strI.."description"] = ""
-	TOOL.ClientConVar[strI.."min"] = "0"
-	TOOL.ClientConVar[strI.."max"] = "1"
+	TOOL.ClientConVar[strI.."uid"]          = ""
+	TOOL.ClientConVar[strI.."analog"]       = ""
+	TOOL.ClientConVar[strI.."description"]  = ""
+	TOOL.ClientConVar[strI.."min"]          = "0"
+	TOOL.ClientConVar[strI.."max"]          = "1"
 end
 
 local multi_varlist = {}
@@ -39,14 +39,16 @@ end
 
 cleanup.Register( "wire_joysticks" )
 
-/*usermessage.Hook("joywarn",function(um)
+--[[
+usermessage.Hook("joywarn",function(um)
 	local t = um:ReadShort()
 	if t == 1 then
 		local _uid = um:ReadString() or ""
 		GAMEMODE:AddNotify("Wire Joystick: UID \"".._uid.."\" in use by another player.",NOTIFY_ERROR,10)
 		surface.PlaySound("buttons/button10.wav")
 	end
-end)*/
+end)
+]]--
 
 function TOOL.sanitizeUID(uid)
 	uid = tostring(uid)
@@ -60,16 +62,16 @@ function TOOL:LeftClick( trace )
 	if (!trace.HitPos) then return false end
 	if (trace.Entity:IsPlayer()) then return false end
 	if ( CLIENT ) then return true end
-	
+
 	local ply = self:GetOwner()
-	
-	//Check all UIDs first so we notify the player of all conflicting UIDs, not just one
+
+	-- Check all UIDs first so we notify the player of all conflicting UIDs, not just one
 	local status = 0
 	for i = 1,8 do
 		local strI = tostring(i)
 		local _uid = self.sanitizeUID(self:GetClientInfo(strI.."uid"))
-		
-		//Check if the player owns the UID, or if the UID is free
+
+		-- Check if the player owns the UID, or if the UID is free
 		if jcon and jcon.wireModInstances and jcon.wireModInstances[_uid] then
 			for k,v in pairs(jcon.wireModInstances[_uid]) do
 				if v == ply then
@@ -84,18 +86,18 @@ function TOOL:LeftClick( trace )
 			end
 		end
 	end
-	
-	//Conflicting UID, exit
+
+	-- Conflicting UID, exit
 	if status == 2 then
 		return false
 	end
-	
-	//Validate and update
+
+	-- Validate and update
 	local pass = {}
 	local quit = false
 	for i = 1,8 do
 		local strI = tostring(i)
-		
+
 		local _uid = self.sanitizeUID(self:GetClientInfo(strI.."uid"))
 		local uidvalid,uiderror = jcon.isValidUID(_uid)
 		if not uidvalid then
@@ -106,18 +108,18 @@ function TOOL:LeftClick( trace )
 		local _description = self:GetClientInfo(strI.."description")
 		local _min = tonumber(self:GetClientInfo(strI.."min")) or 0
 		local _max = tonumber(self:GetClientInfo(strI.."max")) or 1
-		
-		//Check if the player owns the UID, or if the UID is free
+
+		-- Check if the player owns the UID, or if the UID is free
 		local status = 0
 		if jcon and jcon.wireModInstances and jcon.wireModInstances[_uid] then
 			for k,v in pairs(jcon.wireModInstances[_uid]) do
 				if v == ply then
 					status = 1
 				elseif _uid == "jm_" then
-					//Allow override, everyone is allowed to use "jm_"
+					-- Allow override, everyone is allowed to use "jm_"
 				elseif status ~= 1 then
 					status = 2
-					//This usermessage requires stools/wire_joystick.lua
+					-- This usermessage requires stools/wire_joystick.lua
 					umsg.Start("joywarn",ply)
 						umsg.Short(2)
 						umsg.String(_uid)
@@ -125,53 +127,53 @@ function TOOL:LeftClick( trace )
 				end
 			end
 		end
-		
+
 		if status == 2 then
 			return false
 		end
-		
+
 		table.insert(pass,_uid)
 		table.insert(pass,_type)
 		table.insert(pass,_description)
 		table.insert(pass,_min)
 		table.insert(pass,_max)
 		if ( trace.Entity:IsValid() && trace.Entity:GetClass() == "gmod_wire_joystick_multi" && trace.Entity:GetTable().pl == ply ) then
-			//trace.Entity:Update(_uid,_type,_description,_min,_max)
-			//return true
-			
+			-- trace.Entity:Update(_uid,_type,_description,_min,_max)
+			-- return true
+
 			quit = true
 		end
 	end
-	
-	//If we're updating, exit now
+
+	-- If we're updating, exit now
 	if quit then
 		trace.Entity:Update(unpack(pass))
 		return true
 	end
-	
+
 	if ( !self:GetSWEP():CheckLimit( "wire_joysticks" ) ) then return false end
-	
+
 	local Ang = trace.HitNormal:Angle()
 	Ang.pitch = Ang.pitch + 90
-	
+
 	local wire_joystick = MakeWireJoystick_Multi(ply,trace.HitPos,Ang,unpack(pass))
 	if not wire_joystick then
 		return
 	end
-	
+
 	local min = wire_joystick:OBBMins()
 	wire_joystick:SetPos( trace.HitPos - trace.HitNormal * min.z )
-	
+
 	local const = WireLib.Weld(wire_joystick, trace.Entity, trace.PhysicsBone, true, true)
-	
+
 	undo.Create("Wire Joystick Multi")
 		undo.AddEntity( wire_joystick )
 		undo.AddEntity( const )
 		undo.SetPlayer( ply )
 	undo.Finish()
-	
+
 	ply:AddCleanup( "wire_joysticks", wire_joystick )
-	
+
 	return true
 end
 
@@ -179,7 +181,7 @@ function TOOL:RightClick( trace )
 	local ply = self:GetOwner()
 	if trace.Entity:IsValid() && trace.Entity:GetClass() == "gmod_wire_joystick_multi" && trace.Entity:GetTable().pl == ply then
 		local tab = trace.Entity:GetTable()
-		
+
 		for k,v in pairs(multi_varlist) do
 			ply:ConCommand("wire_joystick_multi_"..v.." "..tostring(tab[v]))
 		end
@@ -189,7 +191,7 @@ end
 
 function TOOL:Reload( trace )
 	if ( CLIENT ) then return true end
-	
+
 	if (self:GetStage() == 0) and trace.Entity:GetClass() == "gmod_wire_joystick_multi" then
 		self.PodCont = trace.Entity
 		self:SetStage(1)
@@ -211,12 +213,12 @@ function TOOL:Reload( trace )
 	end
 end
 
-/*
+--[[
 if (SERVER) then
 
-	function MakeWirejoystick_multi(pl,Pos,Ang,...)//UID,type,description,min,max)
+	function MakeWirejoystick_multi(pl,Pos,Ang,...) -- UID,type,description,min,max)
 		if ( !pl:CheckLimit( "wire_joysticks" ) ) then return false end
-	
+
 		local wire_joystick = ents.Create( "gmod_wire_joystick_multi" )
 		if (!wire_joystick:IsValid()) then return false end
 
@@ -224,27 +226,27 @@ if (SERVER) then
 		wire_joystick:SetPos( Pos )
 		wire_joystick:SetModel( Model("models/jaanus/wiretool/wiretool_range.mdl") )
 		wire_joystick:Spawn()
-		
+
 		wire_joystick:Setup(pl,unpack(arg))//UID,type,description,min,max)
-		
+
 		wire_joystick:SetPlayer( pl )
 		wire_joystick.pl = pl
 
 		pl:AddCount( "wire_joysticks", wire_joystick )
-		
+
 		return wire_joystick
 	end
-	
+
 	duplicator.RegisterEntityClass("gmod_wire_joystick_multi", MakeWirejoystick_multi,unpack(multi_varlist))
 
 end
-*/
+]]--
 
 function TOOL:UpdateGhostWirejoystick( ent, player )
 	if ( !ent || !ent:IsValid() ) then return end
 
-	local tr 	= util.GetPlayerTrace( player, player:GetAimVector() )
-	local trace = util.TraceLine( tr )
+	local tr	= util.GetPlayerTrace( player, player:GetAimVector() )
+	local trace	= util.TraceLine( tr )
 
 	if (!trace.Hit || trace.Entity:IsPlayer() || trace.Entity:GetClass() == "gmod_wire_joystick_multi" ) then
 		ent:SetNoDraw( true )
@@ -322,23 +324,23 @@ function TOOL.BuildCPanel(panel)
 end
 
 if CLIENT and joystick then
-	--surface.CreateFont("trebuchet",36,500,true,false,"Trebuchet36" )
+	-- surface.CreateFont("trebuchet",36,500,true,false,"Trebuchet36" )
 	surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-	
-	--surface.CreateFont("trebuchet",20,500,true,false,"Trebuchet20" )
+
+	-- surface.CreateFont("trebuchet",20,500,true,false,"Trebuchet20" )
 	surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-	
-	--surface.CreateFont("trebuchet",12,500,true,false,"Trebuchet12" )
+
+	-- surface.CreateFont("trebuchet",12,500,true,false,"Trebuchet12" )
 	surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-	
-	
+
+
 	function TOOL.DrawToolScreen(w,h)
 		local b,e = pcall(function()
 			local w,h = tonumber(w) or 256,tonumber(h) or 256
 			surface.SetDrawColor(0,0,0,255)
 			surface.DrawRect(0,0,w,h)
 			draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
-			
+
 			local y = 36
 			for i = 1,8 do
 				local strI = tostring(i)
@@ -346,7 +348,7 @@ if CLIENT and joystick then
 				if uid:sub(1,3) ~= "jm_" then
 					uid = "jm_"..uid
 				end
-				
+
 				if not jcon then
 					return
 				end
@@ -360,7 +362,7 @@ if CLIENT and joystick then
 							surface.SetDrawColor(0,255,0,255)
 							local disp = w*((val-reg.min)/(reg.max-reg.min))
 							surface.DrawRect(0,y,disp,24)
-							
+
 							local text = tonumber(val) or 0
 							local max = tonumber(LocalPlayer():GetInfo("wire_joystick_multi_"..strI.."max")) or 0
 							local min = tonumber(LocalPlayer():GetInfo("wire_joystick_multi_"..strI.."min")) or 0
@@ -388,10 +390,10 @@ if CLIENT and joystick then
 					surface.DrawRect(0,y,w,24)
 					draw.DrawText(uid.." inactive","Trebuchet20",w/2,y,Color(0,0,255,255),1)
 				end
-				
+
 				draw.DrawText(uid,"Trebuchet12",4,y,Color(255,255,255,255),0)
 				draw.DrawText(tostring(LocalPlayer():GetInfo("wire_joystick_multi_"..strI.."analog") == "1" and "analog" or "digital"),"Trebuchet12",w-4,y,Color(255,255,255,255),2)
-				
+
 				y = y + 24
 			end
 		end)
@@ -400,7 +402,3 @@ if CLIENT and joystick then
 		end
 	end
 end
-
-
-
-
