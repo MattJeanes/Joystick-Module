@@ -25,8 +25,8 @@ for i = 1,8 do
 	TOOL.ClientConVar[strI.."uid"]          = ""
 	TOOL.ClientConVar[strI.."analog"]       = ""
 	TOOL.ClientConVar[strI.."description"]  = ""
-	TOOL.ClientConVar[strI.."min"           = "0"
-	TOOL.ClientConVar[strI.."max"           = "1"
+	TOOL.ClientConVar[strI.."min"]          = "0"
+	TOOL.ClientConVar[strI.."max"]          = "1"
 end
 
 local multi_varlist = {}
