@@ -1,8 +1,10 @@
-// Joystick interface module
-// Version 1.2
-// Written by Night-Eagle
+-- Joystick interface module
+-- Version 1.2
+-- Written by Night-Eagle
 
-/*
+AddCSLuaFile()
+
+--[[
 
 I HIGHLY SUGGEST YOU USE THE JOYSTICK CONFIGURATOR AS OPPOSED TO USING
 THESE REVERSE-COMPATIBILITY FUNCTIONS.
@@ -27,28 +29,28 @@ to change at my discretion.
 than 0 and less than or equal to joystick.NumJoysticks(), a nil value
 will be returned.
 
-*/
+]]
 
-HAT_CENTERED	= -1;
-HAT_RIGHT		= 0;
-HAT_RIGHTUP		= 1;
-HAT_UP			= 2;
-HAT_LEFTUP		= 3;
-HAT_LEFT		= 4;
-HAT_LEFTDOWN	= 5;
-HAT_DOWN		= 6;
-HAT_RIGHTDOWN	= 7;
+HAT_CENTERED  = -1;
+HAT_RIGHT     =  0;
+HAT_RIGHTUP   =  1;
+HAT_UP        =  2;
+HAT_LEFTUP    =  3;
+HAT_LEFT      =  4;
+HAT_LEFTDOWN  =  5;
+HAT_DOWN      =  6;
+HAT_RIGHTDOWN	=  7;
 
 HAT_C	= -1;
-HAT_0	= 0;
-HAT_1	= 1;
-HAT_2	= 2;
-HAT_3	= 3;
-HAT_4	= 4;
-HAT_5	= 5;
-HAT_6	= 6;
-HAT_7	= 7;
-HAT_8	= 0;
+HAT_0	=  0;
+HAT_1	=  1;
+HAT_2	=  2;
+HAT_3	=  3;
+HAT_4	=  4;
+HAT_5	=  5;
+HAT_6	=  6;
+HAT_7	=  7;
+HAT_8	=  0;
 
 local oldjoystickname
 if type(joystick) == "table" and joystick._name then
