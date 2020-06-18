@@ -14,21 +14,7 @@ xcopy /v /y "%joymodInstall%lua\bin\*.dll" "lua\bin"
 xcopy /v /y /s "%joymodInstall%addons" "addons"
 
 echo Joystick module has been installed !
-
-set /p joymodDelete="Cleanup repository in addons ? : "
-
-:: Don't move time while we are standing on it ( one dot, oh yeah )
-
-cd /d "%joymodInstall%"
-cd ..
-
-if "%joymodDelete%"=="y" (
-  rd /S /Q "%joymodInstall%"
-) else (
-  if "%joymodDelete%"=="Y" (
-    rd /S /Q "%joymodInstall%"
-  )
-)
+echo Please remove the clonned repo manually !
 
 timeout 100
 
