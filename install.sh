@@ -20,7 +20,12 @@ if test "$boolrvar" == "y"
 then
   rm -rf "$repopath"
 else
-  echo "Please remove the clonned repo manually !"
+  if test "$boolrvar" == "Y"
+  then
+    rm -rf "$repopath"
+  else
+    echo "Please remove the clonned repo manually !"
+  fi
 fi
 
 exit 0
