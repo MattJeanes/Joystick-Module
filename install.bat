@@ -2,21 +2,22 @@
 
 @echo off
 
+set "joymodMainDir=Joystick"
 set "joymodInstall=%~dp0"
 
 :: Clean install parameter
 
-set /p joymodClean="Perform clean install [y/N] : "
+set /p joymodClean="Perform clean install [y/N] ? "
 
 cd /d "%joymodInstall%"
 cd ..\..
 
 if /I "%joymodClean%" EQU "y" (
-  rd /s /q "addons\Joystick"
+  rd /s /q "addons\%joymodMainDir%"
   del /s /q "lua\bin\gmcl_joystick_*.dll"
 ) else (
   if /I "%joymodClean%" EQU "Y" (
-    rd /s /q "addons\Joystick"
+    rd /s /q "addons\%joymodMainDir%"
     del /s /q "lua\bin\gmcl_joystick_*.dll"
   )
 )
