@@ -329,7 +329,7 @@ if CLIENT and joystick then
       surface.DrawRect(0, 0, w, h)
       draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
       local y, ply = 36, LocalPlayer()
-      local siz = math.floor((h - y) / 8) -- No black line at the tools screen bottom
+      local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
 
       for i = 1, 8 do
         local strI = tostring(i)
