@@ -50,9 +50,8 @@ usermessage.Hook("joywarn",function(um)
 end)
 ]]--
 
-function TOOL.sanitizeUID(uid)
-  local prf = "jm_"
-  local uid = tostring(uid)
+function TOOL:SanitizeUID(uid)
+  local prf, uid = "jm_", tostring(uid)
   if uid:sub(1,3) ~= prf then
     return prf..uid
   end
@@ -71,7 +70,7 @@ function TOOL:LeftClick( trace )
   local status = 0
   for i = 1, 8 do
     local strI = tostring(i)
-    local _uid = self.sanitizeUID(self:GetClientInfo(strI.."uid"))
+    local _uid = self:SanitizeUID(self:GetClientInfo(strI.."uid"))
 
     -- Check if the player owns the UID, or if the UID is free
     if jcon and wins and wins[_uid] then
@@ -100,7 +99,7 @@ function TOOL:LeftClick( trace )
   for i = 1, 8 do
     local strI = tostring(i)
 
-    local _uid = self.sanitizeUID(self:GetClientInfo(strI.."uid"))
+    local _uid = self:SanitizeUID(self:GetClientInfo(strI.."uid"))
     local uidvalid,uiderror = jcon.isValidUID(_uid)
     if not uidvalid then
       ErrorNoHalt("Wire Joystick: "..tostring(uiderror).."\n")
@@ -285,59 +284,56 @@ function TOOL:Think()
 end
 
 function TOOL.BuildCPanel(panel)
+  local sPrefix, pItem = "wire_joystick_multi"
+  panel:SetName(language.GetPhrase("tool."..sPrefix..".name"))
+  panel:Help(language.GetPhrase("tool."..sPrefix..".desc"))
+  panel:Button( "Joystick Configuration", "joyconfig" )
+  panel:Help( "Joystick configuration should be run after placing a chip. "..
+    "In order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\n"..
+    "Multiple devices with the same UID will receive from the same input, but may have different max/min settings." )
   local pItem
   for i = 1, 8 do
     local strI = tostring(i)
     panel:Help( "Control "..strI )
-    pItem = panel:TextEntry( "UID", "wire_joystick_multi_"..strI.."uid" )
-    pItem:SetTooltip( "Maximum 17 characters" )
-    pItem = panel:TextEntry( "Description", "wire_joystick_multi_"..strI.."description")
-    pItem:SetTooltip( "Maximum 20 characters" )
+    pItem = panel:TextEntry( "UID" )
+    pItem:SetTooltip( "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
+    pItem.OnChange = function(pnSelf)
+      local sTxt = pnSelf:GetText():Trim():sub(1, 17)
+            sTxt = sTxt:gsub("%s+", "0"):gsub("%W", "0")
+      RunConsoleCommand("wire_joystick_multi_"..strI.."uid", sTxt)
+    end
+    pItem = panel:TextEntry( "Description" )
+    pItem:SetTooltip( "Channel description. Maximum 20 characters" )
+    pItem.OnChange = function(pnSelf)
+      local sTxt = pnSelf:GetText():Trim():sub(1, 20)
+      RunConsoleCommand("wire_joystick_multi_"..strI.."description", sTxt)
+    end
     pItem = panel:CheckBox( "Analog", "wire_joystick_multi_"..strI.."analog" )
     pItem:SetTooltip( "Unchecked for digital input" )
     Item = panel:NumSlider( "Minimum / Off", "wire_joystick_multi_"..strI.."min", -10, 10, 0)
+    Item:SetTooltip( "Minimum output value when analogue or OFF value when digital" )
     Item = panel:NumSlider( "Maximum / On" , "wire_joystick_multi_"..strI.."max", -10, 10, 0)
+    Item:SetTooltip( "Maximum output value when analogue or ON value when digital" )
   end
-  pItem = panel:Button( "Joystick Configuration", "joyconfig" )
-  pItem = panel:Help( "UID = Unique Identifier\nNo spaces, alphanumeric, 17 charater limit\nNote:\nJoystick configuration should be run after placing a chip.\nIn order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\nMultiple devices with the same UID will receive from the same input, but may have different max/min settings." )
-end
-
-if CLIENT then
-  local cPanel = controlpanel.Get(TOOL.Mode)
-  if(not IsValid(cPanel)) then
-    ErrorNoHalt("Panel invalid: "..tostring(cPanel).."\n") end
-  cPanel:ClearControls()
-  local b, e = pcall(TOOL.BuildCPanel, cPanel)
-  if(not b) then ErrorNoHalt("Panel error: "..e.."\n") end
-  print("Joy panel success !")
 end
 
 if CLIENT and joystick then
-  -- surface.CreateFont("trebuchet",36,500,true,false,"Trebuchet36" )
   surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-
-  -- surface.CreateFont("trebuchet",20,500,true,false,"Trebuchet20" )
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-
-  -- surface.CreateFont("trebuchet",12,500,true,false,"Trebuchet12" )
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
 
-
-  function TOOL.DrawToolScreen(w,h)
+  function TOOL:DrawToolScreen(w,h)
     local b,e = pcall(function()
-      local ply = LocalPlayer()
-      local w,h = tonumber(w) or 256,tonumber(h) or 256
-      surface.SetDrawColor(0,0,0,255)
-      surface.DrawRect(0,0,w,h)
+      local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
+      surface.SetDrawColor(0, 0, 0, 255)
+      surface.DrawRect(0, 0, w, h)
       draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
+      local y, ply = 36, LocalPlayer()
+      local siz = math.floor((h - y) / 8) -- No black line at the tools screen bottom
 
-      local y = 36
       for i = 1, 8 do
         local strI = tostring(i)
-        local uid = tostring(ply:GetInfo("wire_joystick_multi_"..strI.."uid"))
-        if uid:sub(1,3) ~= "jm_" then
-          uid = "jm_"..uid
-        end
+        local uid = self:SanitizeUID(ply:GetInfo("wire_joystick_multi_"..strI.."uid"))
 
         if not jcon then
           return
@@ -348,10 +344,10 @@ if CLIENT and joystick then
             local val = reg:GetValue()
             if type(val) == "number" then
               surface.SetDrawColor(255,0,0,255)
-              surface.DrawRect(0,y,w,24)
+              surface.DrawRect(0,y,w,siz)
               surface.SetDrawColor(0,255,0,255)
               local disp = w*((val-reg.min)/(reg.max-reg.min))
-              surface.DrawRect(0,y,disp,24)
+              surface.DrawRect(0,y,disp,siz)
 
               local text = tonumber(val) or 0
               local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
@@ -360,31 +356,31 @@ if CLIENT and joystick then
               draw.DrawText(math.Round(text),"Trebuchet20",w/2,y,Color(0,0,255,255),1)
             elseif type(val) == "boolean" then
               surface.SetDrawColor(255,0,0,255)
-              surface.DrawRect(0,y,w,24)
+              surface.DrawRect(0,y,w,siz)
               surface.SetDrawColor(0,255,0,255)
               if val then
-                surface.DrawRect(0,y,w,24)
+                surface.DrawRect(0,y,w,siz)
               end
               local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
               local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
               draw.DrawText(val and max or min,"Trebuchet20",w/2,y,Color(0,0,255,255),1)
             end
-            draw.DrawText(reg:GetDeviceName() or "","Trebuchet12",4,y+24-12,Color(255,255,255,255),0)
+            draw.DrawText(reg:GetDeviceName() or "","Trebuchet12",4,y+siz-12,Color(255,255,255,255),0)
           else
             surface.SetDrawColor(255,165,0,255)
-            surface.DrawRect(0,y,w,24)
+            surface.DrawRect(0,y,w,siz)
             draw.DrawText(uid.." unbound","Trebuchet20",w/2,y,Color(0,0,255,255),1)
           end
         else
           surface.SetDrawColor(32,178,170,255)
-          surface.DrawRect(0,y,w,24)
+          surface.DrawRect(0,y,w,siz)
           draw.DrawText(uid.." inactive","Trebuchet20",w/2,y,Color(0,0,255,255),1)
         end
 
         draw.DrawText(uid,"Trebuchet12",4,y,Color(255,255,255,255),0)
         draw.DrawText(tostring(ply:GetInfo("wire_joystick_multi_"..strI.."analog") == "1" and "analog" or "digital"),"Trebuchet12",w-4,y,Color(255,255,255,255),2)
 
-        y = y + 24
+        y = y + siz
       end
     end)
     if not b then
