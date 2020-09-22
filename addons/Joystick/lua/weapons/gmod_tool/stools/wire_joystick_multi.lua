@@ -368,10 +368,9 @@ function TOOL.BuildCPanel(panel)
   panel:Help( "Joystick configuration should be run after placing a chip. "..
     "In order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\n"..
     "Multiple devices with the same UID will receive from the same input, but may have different max/min settings." )
-  local pItem
   for i = 1, 8 do
-    local strI = tostring(i)
-    panel:Help( "Control "..strI )
+    local strI, pItem = tostring(i)
+    pItem = panel:Help( "Control "..strI )
     pItem = panel:TextEntry( "UID" )
     pItem:SetTooltip( "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
     pItem.OnChange = function(pnSelf)
@@ -384,10 +383,10 @@ function TOOL.BuildCPanel(panel)
     end
     pItem = panel:CheckBox( "Analog", sPrefix..strI.."analog" )
     pItem:SetTooltip( "Unchecked for digital input" )
-    Item = panel:NumSlider( "Minimum / Off", sPrefix..strI.."min", -10, 10, 0)
-    Item:SetTooltip( "Minimum output value when analogue or OFF value when digital" )
-    Item = panel:NumSlider( "Maximum / On" , sPrefix..strI.."max", -10, 10, 0)
-    Item:SetTooltip( "Maximum output value when analogue or ON value when digital" )
+    pItem = panel:NumSlider( "Minimum / Off", sPrefix..strI.."min", -10, 10, 0)
+    pItem:SetTooltip( "Minimum output value when analogue or OFF value when digital" )
+    pItem = panel:NumSlider( "Maximum / On" , sPrefix..strI.."max", -10, 10, 0)
+    pItem:SetTooltip( "Maximum output value when analogue or ON value when digital" )
   end
 end
 
