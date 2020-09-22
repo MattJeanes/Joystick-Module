@@ -389,11 +389,19 @@ local function trimTextEntry(pnText, sConvar, nLen)
   RunConsoleCommand(sConvar, sNew) -- Send to tool script convar
 end
 
+local gtConvarList = TOOL:BuildConVarList()
+
 function TOOL.BuildCPanel(panel)
   panel:ClearControls()
+  local pnPresets = vgui.Create("ControlPresets", panel)
+        pnPresets:SetPreset(gsToolModeOP)
+        pnPresets:AddOption("Default", gtConvarList)
+        for key, val in pairs(table.GetKeys(gtConvarList)) do
+          pnPresets:AddConVar(val) end
+  panel:AddItem(pnPresets)
   panel:SetName(language.GetPhrase("tool."..gsToolModeOP..".name"))
   panel:Help(language.GetPhrase("tool."..gsToolModeOP..".desc"))
-  panel:Button(language.GetPhrase("tool."..gsToolModeOP..".config_con"))
+  panel:Button(language.GetPhrase("tool."..gsToolModeOP..".config_con"), "joyconfig")
     :SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".config"))
   panel:ControlHelp("Joystick configuration should be run after placing a chip. "..
     "In order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\n"..
