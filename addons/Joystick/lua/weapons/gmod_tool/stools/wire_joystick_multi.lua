@@ -1,21 +1,40 @@
+local gsToolModeOP = TOOL.Mode
+local gsToolPrefix = gsToolModeOP.."_"
+local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
+local gsSentClasMK = "gmod_"..gsToolModeOP
+
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
-TOOL.Name       = "Joystick Multi"
+TOOL.Name       = gsToolModeOP:gsub("wire",""):gsub("%W+", " "):gsub("%s+%w", string.upper):sub(2, -1)
 TOOL.Command    = nil
 TOOL.ConfigName = ""
 
 if CLIENT then
-  language.Add( "tool.wire_joystick_multi.name", "Joystick Multi Tool (Wire)" )
-  language.Add( "tool.wire_joystick_multi.desc", "Spawns a Joystick Module interface chip for use with the wire system." )
-  language.Add( "tool.wire_joystick_multi.0", "Primary: Create/Update Joystick   Secondary: Copy Settings    Reload: Link to pod" )
-  language.Add( "tool.wire_joystick_multi.1", "Now select the pod to link to, or anything other than a pod to revert.")
-  language.Add( "WirejoystickTool_joystick", "Joystick:" )
-  language.Add( "sboxlimit_wire_joysticks", "You've hit the Joysticks limit!" )
+  language.Add( "tool."..gsToolModeOP..".name"      , "Joystick Multi Tool (Wire)" )
+  language.Add( "tool."..gsToolModeOP..".desc"      , "Spawns a Joystick Module interface chip for use with the wire system." )
+  language.Add( "tool."..gsToolModeOP..".0"         , "Primary: Create/Update Joystick   Secondary: Copy Settings    Reload: Link to pod" )
+  language.Add( "tool."..gsToolModeOP..".1"         , "Now select the pod to link to, or anything other than a pod to revert.")
+  language.Add( "tool."..gsToolModeOP..".uid"       , "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
+  language.Add( "tool."..gsToolModeOP..".uid_con"   , "UID")
+  language.Add( "tool."..gsToolModeOP..".bdescr"    , "Write some input description here. Maximum 20 characters. For example `Steering`" )
+  language.Add( "tool."..gsToolModeOP..".bdescr_con", "Description")
+  language.Add( "tool."..gsToolModeOP..".lcontr"    , "This labels the given set of input control configuration settings" )
+  language.Add( "tool."..gsToolModeOP..".lcontr_con", "Control configuration:" )
+  language.Add( "tool."..gsToolModeOP..".maxon"     , "Maximum output value when analogue or ON value when digital" )
+  language.Add( "tool."..gsToolModeOP..".maxon_con" , "Maximum / On")
+  language.Add( "tool."..gsToolModeOP..".minoff"    , "Minimum output value when analogue or OFF value when digital" )
+  language.Add( "tool."..gsToolModeOP..".minoff_con", "Minimum / Off" )
+  language.Add( "tool."..gsToolModeOP..".analog"    , "Enable this when your source is analogue input" )
+  language.Add( "tool."..gsToolModeOP..".analog_con", "Analog input" )
+  language.Add( "tool."..gsToolModeOP..".config"    , "Click this button to open joystick configuration. You can also righ click on the world" )
+  language.Add( "tool."..gsToolModeOP..".config_con", "Joystick Configuration" )
+  language.Add( "WirejoystickTool_joystick" , "Joystick:" )
+  language.Add( "sboxlimit_"..gsToolLimits  , "You've hit the Joysticks limit!" )
   language.Add( "undone_Wire Joystick Multi", "Undone Wire Joystick Multi" )
 end
 
 if SERVER then
-  CreateConVar("sbox_maxwire_joysticks", 20)
+  CreateConVar("sbox_max"..gsToolLimits, 20)
 end
 
 TOOL.Model = "models/jaanus/wiretool/wiretool_range.mdl"
@@ -37,7 +56,7 @@ for i = 1, 8 do
   end
 end
 
-cleanup.Register( "wire_joysticks" )
+cleanup.Register( gsToolLimits )
 
 --[[
 usermessage.Hook("joywarn",function(um)
@@ -140,7 +159,7 @@ function TOOL:LeftClick( trace )
     table.insert(pass, _max)
 
     if ( trace.Entity:IsValid() and
-         trace.Entity:GetClass() == "gmod_wire_joystick_multi" and
+         trace.Entity:GetClass() == gsSentClasMK and
          trace.Entity:GetTable().pl == ply ) then
       -- trace.Entity:Update(_uid,_type,_description,_min,_max)
       -- return true
@@ -155,7 +174,7 @@ function TOOL:LeftClick( trace )
     return true
   end
 
-  if ( not self:GetSWEP():CheckLimit( "wire_joysticks" ) ) then return false end
+  if ( not self:GetSWEP():CheckLimit( gsToolLimits ) ) then return false end
 
   local Ang = trace.HitNormal:Angle()
         Ang.pitch = Ang.pitch + 90
@@ -174,7 +193,7 @@ function TOOL:LeftClick( trace )
     undo.SetPlayer( ply )
   undo.Finish()
 
-  ply:AddCleanup( "wire_joysticks", wire_joystick )
+  ply:AddCleanup( gsToolLimits, wire_joystick )
 
   return true
 end
@@ -182,12 +201,12 @@ end
 function TOOL:RightClick( trace )
   local ply = self:GetOwner()
   if trace.Entity:IsValid() then
-    if trace.Entity:GetClass() == "gmod_wire_joystick_multi" and
+    if trace.Entity:GetClass() == gsSentClasMK and
        trace.Entity:GetTable().pl == ply then
       local tab = trace.Entity:GetTable()
 
       for k,v in pairs(multi_varlist) do
-        ply:ConCommand("wire_joystick_multi_"..v.." "..tostring(tab[v]))
+        ply:ConCommand(gsToolPrefix..v.." "..tostring(tab[v]))
       end
       return true
     end
@@ -200,7 +219,7 @@ function TOOL:Reload( trace )
   if CLIENT then return true end
 
   if (self:GetStage() == 0) and
-      trace.Entity:GetClass() == "gmod_wire_joystick_multi" then
+      trace.Entity:GetClass() == gsSentClasMK then
     self.PodCont = trace.Entity
     self:SetStage(1)
     return true
@@ -226,9 +245,9 @@ end
 if SERVER then
 
   function MakeWirejoystick_multi(pl,Pos,Ang,...) -- UID,type,description,min,max)
-    if ( not pl:CheckLimit( "wire_joysticks" ) ) then return false end
+    if ( not pl:CheckLimit( gsToolLimits ) ) then return false end
 
-    local wire_joystick = ents.Create( "gmod_wire_joystick_multi" )
+    local wire_joystick = ents.Create( gsSentClasMK )
     if (not wire_joystick:IsValid()) then return false end
 
     wire_joystick:SetAngles( Ang )
@@ -241,12 +260,12 @@ if SERVER then
     wire_joystick:SetPlayer( pl )
     wire_joystick.pl = pl
 
-    pl:AddCount( "wire_joysticks", wire_joystick )
+    pl:AddCount( gsToolLimits, wire_joystick )
 
     return wire_joystick
   end
 
-  duplicator.RegisterEntityClass("gmod_wire_joystick_multi", MakeWirejoystick_multi,unpack(multi_varlist))
+  duplicator.RegisterEntityClass( gsSentClasMK, MakeWirejoystick_multi, unpack(multi_varlist) )
 
 end
 ]]--
@@ -258,13 +277,13 @@ function TOOL:UpdateGhostWirejoystick( ent, ply )
 
   if (not trace.Hit or
           trace.Entity:IsPlayer() or
-          trace.Entity:GetClass() == "gmod_wire_joystick_multi" ) then
+          trace.Entity:GetClass() == gsSentClasMK ) then
     ent:SetNoDraw( true )
     return
   end
 
   local Ang = trace.HitNormal:Angle()
-  Ang.pitch = Ang.pitch + 90
+        Ang.pitch = Ang.pitch + 90
 
   local min = ent:OBBMins()
   ent:SetPos( trace.HitPos - trace.HitNormal * min.z )
@@ -283,109 +302,70 @@ function TOOL:Think()
   self:UpdateGhostWirejoystick( self.GhostEntity, self:GetOwner() )
 end
 
-local function trimTextEntry(pnText, sConvar, nLen)
-  local sTxt = pnSelf:GetText():Trim()
-        sTxt = sTxt:gsub("%s+", "0"):gsub("%W", "0")
-  if(sTxt:len() > nLen) then
-    sTxt = sTxt:sub(1, nLen)
-    ChangeTooltip(pnSelf)
-  end
-  pnSelf:SetText(sTxt)
-  RunConsoleCommand(sConvar, sTxt)
-end
-
-function TOOL.BuildCPanel(panel)
-  local sPrefix = "wire_joystick_multi_"
-  panel:SetName(language.GetPhrase("tool."..sPrefix..".name"))
-  panel:Help(language.GetPhrase("tool."..sPrefix..".desc"))
-  panel:Button( "Joystick Configuration", "joyconfig" )
-  panel:Help( "Joystick configuration should be run after placing a chip. "..
-    "In order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\n"..
-    "Multiple devices with the same UID will receive from the same input, but may have different max/min settings." )
-  for i = 1, 8 do
-    local strI, pItem = tostring(i)
-    pItem = panel:Help( "Control "..strI )
-    pItem = panel:TextEntry( "UID" )
-    pItem:SetTooltip( "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
-    pItem.OnChange = function(pnSelf)
-      trimTextEntry(pnSelf, sPrefix..strI.."uid", 17)
-    end
-    pItem = panel:TextEntry( "Description" )
-    pItem:SetTooltip( "Channel description. Maximum 20 characters" )
-    pItem.OnChange = function(pnSelf)
-      trimTextEntry(pnSelf, sPrefix..strI.."description", 20)
-    end
-    pItem = panel:CheckBox( "Analog", sPrefix..strI.."analog" )
-    pItem:SetTooltip( "Unchecked for digital input" )
-    pItem = panel:NumSlider( "Minimum / Off", sPrefix..strI.."min", -10, 10, 0)
-    pItem:SetTooltip( "Minimum output value when analogue or OFF value when digital" )
-    pItem = panel:NumSlider( "Maximum / On" , sPrefix..strI.."max", -10, 10, 0)
-    pItem:SetTooltip( "Maximum output value when analogue or ON value when digital" )
-  end
-end
-
 if CLIENT and joystick then
   surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
+
+  local clBlue  = Color(0  , 0  , 255, 255)
+  local clWhite = Color(255, 250, 255, 255)
 
   function TOOL:DrawToolScreen(w, h)
     local b,e = pcall(function()
       local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
       surface.SetDrawColor(0, 0, 0, 255)
       surface.DrawRect(0, 0, w, h)
-      draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
+      draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,clWhite,0)
       local y, ply = 36, LocalPlayer()
       local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
 
       for i = 1, 8 do
         local strI = tostring(i)
-        local uid = self:SanitizeUID(ply:GetInfo("wire_joystick_multi_"..strI.."uid"))
+        local uid = self:SanitizeUID(ply:GetInfo(gsToolPrefix..strI.."uid"))
 
-        if not jcon then
-          return
-        end
+        if not jcon then return end
+
         local reg = jcon.getRegisterByUID(uid)
         if reg and reg.IsJoystickReg then
           if reg:IsBound() then
             local val = reg:GetValue()
             if type(val) == "number" then
-              surface.SetDrawColor(255,0,0,255)
-              surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0,255,0,255)
-              local disp = w*((val-reg.min)/(reg.max-reg.min))
-              surface.DrawRect(0,y,disp,siz)
+              surface.SetDrawColor(255, 0, 0, 255)
+              surface.DrawRect(0, y, w, siz)
+              surface.SetDrawColor(0, 255, 0, 255)
+              local disp = w * ((val - reg.min) / (reg.max - reg.min))
+              surface.DrawRect(0, y, disp, siz)
 
               local text = tonumber(val) or 0
-              local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
-              local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
-              text = text/255*(max-min)+min
-              draw.DrawText(math.Round(text),"Trebuchet20",w/2,y,Color(0,0,255,255),1)
+              local max = tonumber(ply:GetInfo(gsToolPrefix..strI.."max")) or 0
+              local min = tonumber(ply:GetInfo(gsToolPrefix..strI.."min")) or 0
+              text = text / 255 * (max - min) + min
+              draw.DrawText(math.Round(text), "Trebuchet20", w / 2, y, clBlue, 1)
             elseif type(val) == "boolean" then
-              surface.SetDrawColor(255,0,0,255)
+              surface.SetDrawColor(255, 0, 0, 255)
               surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0,255,0,255)
+              surface.SetDrawColor(0, 255, 0, 255)
               if val then
-                surface.DrawRect(0,y,w,siz)
+                surface.DrawRect(0, y, w, siz)
               end
-              local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
-              local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
-              draw.DrawText(val and max or min,"Trebuchet20",w/2,y,Color(0,0,255,255),1)
+              local max = tonumber(ply:GetInfo(gsToolPrefix..strI.."max")) or 0
+              local min = tonumber(ply:GetInfo(gsToolPrefix..strI.."min")) or 0
+              draw.DrawText(val and max or min, "Trebuchet20", w / 2, y, clBlue, 1)
             end
-            draw.DrawText(reg:GetDeviceName() or "","Trebuchet12",4,y+siz-12,Color(255,255,255,255),0)
+            draw.DrawText(reg:GetDeviceName() or "", "Trebuchet12", 4, y + siz - 12, clWhite, 0)
           else
-            surface.SetDrawColor(255,165,0,255)
-            surface.DrawRect(0,y,w,siz)
-            draw.DrawText(uid.." unbound","Trebuchet20",w/2,y,Color(0,0,255,255),1)
+            surface.SetDrawColor(255, 165, 0, 255)
+            surface.DrawRect(0, y, w, siz)
+            draw.DrawText(uid.." unbound","Trebuchet20", w / 2, y, clBlue, 1)
           end
         else
           surface.SetDrawColor(32,178,170,255)
           surface.DrawRect(0,y,w,siz)
-          draw.DrawText(uid.." inactive","Trebuchet20",w/2,y,Color(0,0,255,255),1)
+          draw.DrawText(uid.." inactive", "Trebuchet20", w / 2, y, clBlue, 1)
         end
-
-        draw.DrawText(uid,"Trebuchet12",4,y,Color(255,255,255,255),0)
-        draw.DrawText(tostring(ply:GetInfo("wire_joystick_multi_"..strI.."analog") == "1" and "analog" or "digital"),"Trebuchet12",w-4,y,Color(255,255,255,255),2)
+        local analog = (ply:GetInfo(gsToolPrefix..strI.."analog") == "1")
+        draw.DrawText(uid, "Trebuchet12", 4, y, clWhite, 0)
+        draw.DrawText(tostring(analog and "analog" or "digital"), "Trebuchet12", w - 4, y, clWhite, 2)
 
         y = y + siz
       end
@@ -393,5 +373,51 @@ if CLIENT and joystick then
     if not b then
       ErrorNoHalt(e,"\n")
     end
+  end
+end
+
+local function trimTextEntry(pnText, sConvar, nLen)
+  local sTxt = pnText:GetText()      -- Read the panel data
+  local sNew = sTxt:Trim()           -- Trim front back spaces
+        sNew = sNew:gsub("%s+", "0") -- Translate intern spaces
+        sNew = sNew:gsub("%W+", "0") -- Translate non-alphanum
+  if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
+  if(sNew != sTxt) then -- User feedback for wrong value
+    ChangeTooltip(pnText) -- Draw the tool tip use as notification
+    pnText:SetText(sNew) -- Update the text entry with the fixed value
+  end
+  RunConsoleCommand(sConvar, sNew) -- Send to tool script convar
+end
+
+function TOOL.BuildCPanel(panel)
+  panel:ClearControls()
+  panel:SetName(language.GetPhrase("tool."..gsToolModeOP..".name"))
+  panel:Help(language.GetPhrase("tool."..gsToolModeOP..".desc"))
+  panel:Button(language.GetPhrase("tool."..gsToolModeOP..".config_con"))
+    :SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".config"))
+  panel:ControlHelp("Joystick configuration should be run after placing a chip. "..
+    "In order to change an existing binding, there must be only one chip with its UID left.\nOne UID allows for one input.\n\n"..
+    "Multiple devices with the same UID will receive from the same input, but may have different max/min settings.")
+  for i = 1, 8 do
+    local ID, pItem = tostring(i)
+    pItem = panel:Help(language.GetPhrase("tool."..gsToolModeOP..".lcontr_con").." "..ID)
+    pItem:Center()
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".lcontr"))
+    pItem = panel:TextEntry(language.GetPhrase("tool."..gsToolModeOP..".uid_con"))
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".uid"))
+    pItem.OnChange = function(pnSelf)
+      trimTextEntry(pnSelf, gsToolPrefix..ID.."uid", 17)
+    end
+    pItem = panel:TextEntry(language.GetPhrase("tool."..gsToolModeOP..".bdescr_con"))
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".bdescr"))
+    pItem.OnChange = function(pnSelf)
+      trimTextEntry(pnSelf, gsToolPrefix..ID.."description", 20)
+    end
+    pItem = panel:CheckBox(language.GetPhrase("tool."..gsToolModeOP..".analog_con"), gsToolPrefix..ID.."analog")
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".analog"))
+    pItem = panel:NumSlider(language.GetPhrase("tool."..gsToolModeOP..".minoff_con"), gsToolPrefix..ID.."min", -10, 10, 0)
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".minoff"))
+    pItem = panel:NumSlider(language.GetPhrase("tool."..gsToolModeOP..".maxon_con") , gsToolPrefix..ID.."max", -10, 10, 0)
+    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".maxon"))
   end
 end
