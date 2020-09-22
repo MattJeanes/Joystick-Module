@@ -283,8 +283,85 @@ function TOOL:Think()
   self:UpdateGhostWirejoystick( self.GhostEntity, self:GetOwner() )
 end
 
+function TOOL:DrawToolScreen(w, h)
+  local b,e = pcall(function()
+    local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
+    surface.SetDrawColor(0, 0, 0, 255)
+    surface.DrawRect(0, 0, w, h)
+    draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
+    local y, ply = 36, LocalPlayer()
+    local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
+
+    for i = 1, 8 do
+      local strI = tostring(i)
+      local uid = self:SanitizeUID(ply:GetInfo("wire_joystick_multi_"..strI.."uid"))
+
+      if not jcon then
+        return
+      end
+      local reg = jcon.getRegisterByUID(uid)
+      if reg and reg.IsJoystickReg then
+        if reg:IsBound() then
+          local val = reg:GetValue()
+          if type(val) == "number" then
+            surface.SetDrawColor(255,0,0,255)
+            surface.DrawRect(0,y,w,siz)
+            surface.SetDrawColor(0,255,0,255)
+            local disp = w*((val-reg.min)/(reg.max-reg.min))
+            surface.DrawRect(0,y,disp,siz)
+
+            local text = tonumber(val) or 0
+            local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
+            local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
+            text = text/255*(max-min)+min
+            draw.DrawText(math.Round(text),"Trebuchet20",w/2,y,Color(0,0,255,255),1)
+          elseif type(val) == "boolean" then
+            surface.SetDrawColor(255,0,0,255)
+            surface.DrawRect(0,y,w,siz)
+            surface.SetDrawColor(0,255,0,255)
+            if val then
+              surface.DrawRect(0,y,w,siz)
+            end
+            local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
+            local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
+            draw.DrawText(val and max or min,"Trebuchet20",w/2,y,Color(0,0,255,255),1)
+          end
+          draw.DrawText(reg:GetDeviceName() or "","Trebuchet12",4,y+siz-12,Color(255,255,255,255),0)
+        else
+          surface.SetDrawColor(255,165,0,255)
+          surface.DrawRect(0,y,w,siz)
+          draw.DrawText(uid.." unbound","Trebuchet20",w/2,y,Color(0,0,255,255),1)
+        end
+      else
+        surface.SetDrawColor(32,178,170,255)
+        surface.DrawRect(0,y,w,siz)
+        draw.DrawText(uid.." inactive","Trebuchet20",w/2,y,Color(0,0,255,255),1)
+      end
+
+      draw.DrawText(uid,"Trebuchet12",4,y,Color(255,255,255,255),0)
+      draw.DrawText(tostring(ply:GetInfo("wire_joystick_multi_"..strI.."analog") == "1" and "analog" or "digital"),"Trebuchet12",w-4,y,Color(255,255,255,255),2)
+
+      y = y + siz
+    end
+  end)
+  if not b then
+    ErrorNoHalt(e,"\n")
+  end
+end
+
+local function trimTextEntry(pnText, sConvar, nLen)
+  local sTxt = pnSelf:GetText():Trim()
+        sTxt = sTxt:gsub("%s+", "0"):gsub("%W", "0")
+  if(sTxt:len() > nLen) then
+    sTxt = sTxt:sub(1, nLen)
+    ChangeTooltip(pnSelf)
+  end
+  pnSelf:SetText(sTxt)
+  RunConsoleCommand(sConvar, sTxt)
+end
+
 function TOOL.BuildCPanel(panel)
-  local sPrefix, pItem = "wire_joystick_multi"
+  local sPrefix = "wire_joystick_multi_"
   panel:SetName(language.GetPhrase("tool."..sPrefix..".name"))
   panel:Help(language.GetPhrase("tool."..sPrefix..".desc"))
   panel:Button( "Joystick Configuration", "joyconfig" )
@@ -298,21 +375,18 @@ function TOOL.BuildCPanel(panel)
     pItem = panel:TextEntry( "UID" )
     pItem:SetTooltip( "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
     pItem.OnChange = function(pnSelf)
-      local sTxt = pnSelf:GetText():Trim():sub(1, 17)
-            sTxt = sTxt:gsub("%s+", "0"):gsub("%W", "0")
-      RunConsoleCommand("wire_joystick_multi_"..strI.."uid", sTxt)
+      trimTextEntry(pnSelf, sPrefix..strI.."uid", 17)
     end
     pItem = panel:TextEntry( "Description" )
     pItem:SetTooltip( "Channel description. Maximum 20 characters" )
     pItem.OnChange = function(pnSelf)
-      local sTxt = pnSelf:GetText():Trim():sub(1, 20)
-      RunConsoleCommand("wire_joystick_multi_"..strI.."description", sTxt)
+      trimTextEntry(pnSelf, sPrefix..strI.."description", 20)
     end
-    pItem = panel:CheckBox( "Analog", "wire_joystick_multi_"..strI.."analog" )
+    pItem = panel:CheckBox( "Analog", sPrefix..strI.."analog" )
     pItem:SetTooltip( "Unchecked for digital input" )
-    Item = panel:NumSlider( "Minimum / Off", "wire_joystick_multi_"..strI.."min", -10, 10, 0)
+    Item = panel:NumSlider( "Minimum / Off", sPrefix..strI.."min", -10, 10, 0)
     Item:SetTooltip( "Minimum output value when analogue or OFF value when digital" )
-    Item = panel:NumSlider( "Maximum / On" , "wire_joystick_multi_"..strI.."max", -10, 10, 0)
+    Item = panel:NumSlider( "Maximum / On" , sPrefix..strI.."max", -10, 10, 0)
     Item:SetTooltip( "Maximum output value when analogue or ON value when digital" )
   end
 end
@@ -321,70 +395,4 @@ if CLIENT and joystick then
   surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
-
-  function TOOL:DrawToolScreen(w,h)
-    local b,e = pcall(function()
-      local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
-      surface.SetDrawColor(0, 0, 0, 255)
-      surface.DrawRect(0, 0, w, h)
-      draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,Color(255,255,255,255),0)
-      local y, ply = 36, LocalPlayer()
-      local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
-
-      for i = 1, 8 do
-        local strI = tostring(i)
-        local uid = self:SanitizeUID(ply:GetInfo("wire_joystick_multi_"..strI.."uid"))
-
-        if not jcon then
-          return
-        end
-        local reg = jcon.getRegisterByUID(uid)
-        if reg and reg.IsJoystickReg then
-          if reg:IsBound() then
-            local val = reg:GetValue()
-            if type(val) == "number" then
-              surface.SetDrawColor(255,0,0,255)
-              surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0,255,0,255)
-              local disp = w*((val-reg.min)/(reg.max-reg.min))
-              surface.DrawRect(0,y,disp,siz)
-
-              local text = tonumber(val) or 0
-              local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
-              local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
-              text = text/255*(max-min)+min
-              draw.DrawText(math.Round(text),"Trebuchet20",w/2,y,Color(0,0,255,255),1)
-            elseif type(val) == "boolean" then
-              surface.SetDrawColor(255,0,0,255)
-              surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0,255,0,255)
-              if val then
-                surface.DrawRect(0,y,w,siz)
-              end
-              local max = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."max")) or 0
-              local min = tonumber(ply:GetInfo("wire_joystick_multi_"..strI.."min")) or 0
-              draw.DrawText(val and max or min,"Trebuchet20",w/2,y,Color(0,0,255,255),1)
-            end
-            draw.DrawText(reg:GetDeviceName() or "","Trebuchet12",4,y+siz-12,Color(255,255,255,255),0)
-          else
-            surface.SetDrawColor(255,165,0,255)
-            surface.DrawRect(0,y,w,siz)
-            draw.DrawText(uid.." unbound","Trebuchet20",w/2,y,Color(0,0,255,255),1)
-          end
-        else
-          surface.SetDrawColor(32,178,170,255)
-          surface.DrawRect(0,y,w,siz)
-          draw.DrawText(uid.." inactive","Trebuchet20",w/2,y,Color(0,0,255,255),1)
-        end
-
-        draw.DrawText(uid,"Trebuchet12",4,y,Color(255,255,255,255),0)
-        draw.DrawText(tostring(ply:GetInfo("wire_joystick_multi_"..strI.."analog") == "1" and "analog" or "digital"),"Trebuchet12",w-4,y,Color(255,255,255,255),2)
-
-        y = y + siz
-      end
-    end)
-    if not b then
-      ErrorNoHalt(e,"\n")
-    end
-  end
 end
