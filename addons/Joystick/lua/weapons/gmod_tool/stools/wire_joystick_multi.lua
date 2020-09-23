@@ -10,24 +10,24 @@ TOOL.Command    = nil
 TOOL.ConfigName = ""
 
 if CLIENT then
-  language.Add( "tool."..gsToolModeOP..".name"      , "Joystick Multi Tool (Wire)" )
-  language.Add( "tool."..gsToolModeOP..".desc"      , "Spawns a Joystick Module interface chip for use with the wire system." )
-  language.Add( "tool."..gsToolModeOP..".0"         , "Primary: Create/Update Joystick   Secondary: Copy Settings    Reload: Link to pod" )
-  language.Add( "tool."..gsToolModeOP..".1"         , "Now select the pod to link to, or anything other than a pod to revert.")
-  language.Add( "tool."..gsToolModeOP..".uid"       , "Unique identifier. No spaces, alphanumeric, 17 charater limit" )
-  language.Add( "tool."..gsToolModeOP..".uid_con"   , "UID")
-  language.Add( "tool."..gsToolModeOP..".bdescr"    , "Write some input description here. Maximum 20 characters. For example `Steering`" )
-  language.Add( "tool."..gsToolModeOP..".bdescr_con", "Description")
-  language.Add( "tool."..gsToolModeOP..".lcontr"    , "This labels the given set of input control configuration settings" )
-  language.Add( "tool."..gsToolModeOP..".lcontr_con", "Control configuration:" )
-  language.Add( "tool."..gsToolModeOP..".maxon"     , "Maximum output value when analogue or ON value when digital" )
-  language.Add( "tool."..gsToolModeOP..".maxon_con" , "Maximum / On")
-  language.Add( "tool."..gsToolModeOP..".minoff"    , "Minimum output value when analogue or OFF value when digital" )
-  language.Add( "tool."..gsToolModeOP..".minoff_con", "Minimum / Off" )
-  language.Add( "tool."..gsToolModeOP..".analog"    , "Enable this when your source is analogue input" )
-  language.Add( "tool."..gsToolModeOP..".analog_con", "Analog input" )
-  language.Add( "tool."..gsToolModeOP..".config"    , "Click this button to open joystick configuration. You can also righ click on the world" )
-  language.Add( "tool."..gsToolModeOP..".config_con", "Joystick Configuration" )
+  language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Multi Tool (Wire)" )
+  language.Add( "tool."..gsToolModeOP..".desc"           , "Spawns a Joystick Module interface chip for use with the wire system." )
+  language.Add( "tool."..gsToolModeOP..".0"              , "Primary: Create/Update Joystick   Secondary: Copy Settings    Reload: Link to pod" )
+  language.Add( "tool."..gsToolModeOP..".1"              , "Now select the pod to link to, or anything other than a pod to revert.")
+  language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 charater limit!" )
+  language.Add( "tool."..gsToolModeOP..".uid_con"        , "UID")
+  language.Add( "tool."..gsToolModeOP..".description"    , "Write some input description here. Maximum 20 characters! For example `Steering`" )
+  language.Add( "tool."..gsToolModeOP..".description_con", "Description")
+  language.Add( "tool."..gsToolModeOP..".lcontr"         , "This labels the given set of input control configuration settings" )
+  language.Add( "tool."..gsToolModeOP..".lcontr_con"     , "Control configuration:" )
+  language.Add( "tool."..gsToolModeOP..".maxon"          , "Maximum output value when analogue or ON value when digital" )
+  language.Add( "tool."..gsToolModeOP..".maxon_con"      , "Maximum / On")
+  language.Add( "tool."..gsToolModeOP..".minoff"         , "Minimum output value when analogue or OFF value when digital" )
+  language.Add( "tool."..gsToolModeOP..".minoff_con"     , "Minimum / Off" )
+  language.Add( "tool."..gsToolModeOP..".analog"         , "Enable this when your source is analogue input" )
+  language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
+  language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open joystick configuration. You can also righ click on the world" )
+  language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
   language.Add( "WirejoystickTool_joystick" , "Joystick:" )
   language.Add( "sboxlimit_"..gsToolLimits  , "You've hit the Joysticks limit!" )
   language.Add( "undone_Wire Joystick Multi", "Undone Wire Joystick Multi" )
@@ -41,11 +41,11 @@ TOOL.Model = "models/jaanus/wiretool/wiretool_range.mdl"
 
 for i = 1, 8 do
   local strI = tostring(i)
-  TOOL.ClientConVar[strI.."uid"]          = ""
-  TOOL.ClientConVar[strI.."analog"]       = ""
-  TOOL.ClientConVar[strI.."description"]  = ""
-  TOOL.ClientConVar[strI.."min"]          = "0"
-  TOOL.ClientConVar[strI.."max"]          = "1"
+  TOOL.ClientConVar[strI.."uid"]         = ""
+  TOOL.ClientConVar[strI.."analog"]      = ""
+  TOOL.ClientConVar[strI.."description"] = ""
+  TOOL.ClientConVar[strI.."min"]         = "0"
+  TOOL.ClientConVar[strI.."max"]         = "1"
 end
 
 local multi_varlist = {}
@@ -307,6 +307,7 @@ if CLIENT and joystick then
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
 
+  local clRed   = Color(255, 0  ,   0, 255)
   local clBlue  = Color(0  , 0  , 255, 255)
   local clWhite = Color(255, 250, 255, 255)
 
@@ -376,17 +377,49 @@ if CLIENT and joystick then
   end
 end
 
-local function trimTextEntry(pnText, sConvar, nLen)
-  local sTxt = pnText:GetText()      -- Read the panel data
-  local sNew = sTxt:Trim()           -- Trim front back spaces
-        sNew = sNew:gsub("%s+", "0") -- Translate intern spaces
-        sNew = sNew:gsub("%W+", "0") -- Translate non-alphanum
-  if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
-  if(sNew != sTxt) then -- User feedback for wrong value
-    ChangeTooltip(pnText) -- Draw the tool tip use as notification
-    pnText:SetText(sNew) -- Update the text entry with the fixed value
+local function getRandomString(nLen, nMax)
+  local nEnd = math.Clamp(math.floor(tonumber(nLen) or 0), 0, nMax)
+  local sMap = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  local nTop, sOut = sMap:len(), ""
+  for iD = 1, nEnd do
+    local nRnd = math.random(nTop)
+    sOut = sOut..sMap:sub(nRnd, nRnd)
   end
-  RunConsoleCommand(sConvar, sNew) -- Send to tool script convar
+  return sOut
+end
+
+local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
+  local psName = "tool."..gsToolModeOP.."."..sName
+  local pnConv = gsToolPrefix..sID..sName
+  local pnText, pnName = pnBase:TextEntry(language.GetPhrase(psName.."_con"))
+  pnText.OnChange = function(pnSelf)
+    local sTxt = pnSelf:GetText()
+    local sPat, sNew = tostring(sPattern or ""), sTxt:Trim()
+        sNew = (sPat == "") and sNew or sNew:gsub("["..sPat.."]", "X")
+    if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
+    if(sNew != sTxt) then ChangeTooltip(pnSelf) end
+    RunConsoleCommand(pnConv, sNew)
+  end
+  pnText.AllowInput = function(pnSelf, chData)
+    return ((pnSelf:GetText():len() >= nLen) and true or false)
+  end
+  pnText.OnLoseFocus = function(pnSelf)
+    local sVar = GetConVar(pnConv):GetString()
+          sVar = sVar:gsub("jm_", "")
+    pnSelf:SetText(sVar)
+  end
+  pnText.OnEnter = function(pnSelf)
+    local sTxt = pnSelf:GetText()
+    local nTop = (tonumber(sTxt) or 0)
+    if(nTop <= 0) then return end
+    sRnd = getRandomString(nTop, nLen)
+    RunConsoleCommand(pnConv, sRnd)
+    pnSelf:SetText(sRnd)
+  end
+  pnText:SetUpdateOnType(true)
+  pnText:SetEnterAllowed(true)
+  pnText:SetEditable(true)
+  pnText:SetTooltip(language.GetPhrase(psName))
 end
 
 local gtConvarList = TOOL:BuildConVarList()
@@ -409,18 +442,9 @@ function TOOL.BuildCPanel(panel)
   for i = 1, 8 do
     local ID, pItem = tostring(i)
     pItem = panel:Help(language.GetPhrase("tool."..gsToolModeOP..".lcontr_con").." "..ID)
-    pItem:Center()
     pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".lcontr"))
-    pItem = panel:TextEntry(language.GetPhrase("tool."..gsToolModeOP..".uid_con"))
-    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".uid"))
-    pItem.OnChange = function(pnSelf)
-      trimTextEntry(pnSelf, gsToolPrefix..ID.."uid", 17)
-    end
-    pItem = panel:TextEntry(language.GetPhrase("tool."..gsToolModeOP..".bdescr_con"))
-    pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".bdescr"))
-    pItem.OnChange = function(pnSelf)
-      trimTextEntry(pnSelf, gsToolPrefix..ID.."description", 20)
-    end
+    setupTextEntry(panel, "uid"        , ID, "%s%W", 17)
+    setupTextEntry(panel, "description", ID, ""    , 20)
     pItem = panel:CheckBox(language.GetPhrase("tool."..gsToolModeOP..".analog_con"), gsToolPrefix..ID.."analog")
     pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".analog"))
     pItem = panel:NumSlider(language.GetPhrase("tool."..gsToolModeOP..".minoff_con"), gsToolPrefix..ID.."min", -10, 10, 0)
