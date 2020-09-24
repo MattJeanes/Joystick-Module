@@ -8,11 +8,22 @@ TOOL.Category   = "Input, Output"
 TOOL.Name       = gsToolModeOP:gsub("wire",""):gsub("%W+", " "):gsub("%s+%w", string.upper):sub(2, -1)
 TOOL.Command    = nil
 TOOL.ConfigName = ""
+TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
 
 if CLIENT then
+
+  TOOL.Information = {
+    { name = "info",  stage = 1   },
+    { name = "left"      },
+    { name = "right"     },
+    { name = "reload"    }
+  }
+
   language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Multi Tool (Wire)" )
-  language.Add( "tool."..gsToolModeOP..".desc"           , "Spawns a Joystick Module interface chip for use with the wire system." )
-  language.Add( "tool."..gsToolModeOP..".0"              , "Primary: Create/Update Joystick   Secondary: Copy Settings    Reload: Link to pod" )
+  language.Add( "tool."..gsToolModeOP..".desc"           , "Spawns a Joystick Module interface chip for use with the wire system" )
+  language.Add( "tool."..gsToolModeOP..".left"           , "Create / Update joystick" )
+  language.Add( "tool."..gsToolModeOP..".right"          , "Copy joystick settings. Hit world to open configuration" )
+  language.Add( "tool."..gsToolModeOP..".reload"         , "Link joystick to pod controller" )
   language.Add( "tool."..gsToolModeOP..".1"              , "Now select the pod to link to, or anything other than a pod to revert.")
   language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 charater limit!" )
   language.Add( "tool."..gsToolModeOP..".uid_con"        , "UID")
@@ -29,16 +40,15 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
   language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open joystick configuration. You can also righ click on the world" )
   language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
-  language.Add( "WirejoystickTool_joystick" , "Joystick:" )
-  language.Add( "sboxlimit_"..gsToolLimits  , "You've hit the Joysticks limit!" )
-  language.Add( "undone_Wire Joystick Multi", "Undone Wire Joystick Multi" )
+  language.Add( "undone_"..gsToolModeOP, "Undone Wire Joystick Multi" )
+  language.Add( "sboxlimit_"..gsToolLimits, "You've hit the Joystick Multi limit!" )
+  language.Add( "cleanup_" .. gsToolLimits, "Wire Joystick Multi chips " )
+  language.Add( "cleaned_" .. gsToolLimits, "Cleaned up all Joystick Multi chips" )
 end
 
 if SERVER then
   CreateConVar("sbox_max"..gsToolLimits, 20)
 end
-
-TOOL.Model = "models/jaanus/wiretool/wiretool_range.mdl"
 
 for i = 1, 8 do
   local strI = tostring(i)
@@ -49,13 +59,7 @@ for i = 1, 8 do
   TOOL.ClientConVar[strI.."max"]         = "1"
 end
 
-local multi_varlist = {}
-for i = 1, 8 do
-  local strI = tostring(i)
-  for k,v in pairs{"uid","analog","description","min","max"} do
-    table.insert(multi_varlist,strI..v)
-  end
-end
+local gtConvarList = TOOL:BuildConVarList()
 
 cleanup.Register( gsToolLimits )
 
@@ -80,7 +84,7 @@ end
 
 local function DeSanitizeUID(uid)
   local prf, uid = "jm_", tostring(uid)
-  if uid:sub(1,3) ~= prf then
+  if uid:sub(1,3) == prf then
     return uid:sub(4, -1)
   end
   return uid
@@ -223,9 +227,12 @@ function TOOL:RightClick( trace )
     if trace.Entity:GetClass() == gsSentClasMK and
        trace.Entity:GetTable().pl == ply then
       local tab = trace.Entity:GetTable()
-
-      for k,v in pairs(multi_varlist) do
-        ply:ConCommand(gsToolPrefix..v.." "..tostring(tab[v]))
+      local ord = table.GetKeys(gtConvarList); table.sort(ord)
+      for iD = 1, #ord do
+        local var = ord[iD]
+        local key = var:gsub(gsToolPrefix, "")
+        local cpy = tostring(tab[key] or "")
+        ply:ConCommand(var.." "..DeSanitizeUID(cpy))
       end
       return true
     end
@@ -427,8 +434,6 @@ local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
   pnText:SetTooltip(language.GetPhrase(psPref..sName))
   pnName:SetTooltip(language.GetPhrase(psPref.."autofill"))
 end
-
-local gtConvarList = TOOL:BuildConVarList()
 
 function TOOL.BuildCPanel(panel)
   panel:ClearControls()
