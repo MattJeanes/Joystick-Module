@@ -2,6 +2,7 @@ local gsToolModeOP = TOOL.Mode
 local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
+local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
@@ -91,11 +92,10 @@ local function DeSanitizeUID(uid)
 end
 
 local function GetRandomString(nLen)
-  local sMap = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  local nTop, sOut = sMap:len(), ""
+  local nTop, sOut = MappingFxUID:len(), ""
   for iD = 1, nLen do
     local nRnd = math.random(nTop)
-    sOut = sOut..sMap:sub(nRnd, nRnd)
+    sOut = sOut..MappingFxUID:sub(nRnd, nRnd)
   end
   return sOut
 end
