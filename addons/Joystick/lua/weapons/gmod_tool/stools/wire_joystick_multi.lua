@@ -16,6 +16,7 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".1"              , "Now select the pod to link to, or anything other than a pod to revert.")
   language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 charater limit!" )
   language.Add( "tool."..gsToolModeOP..".uid_con"        , "UID")
+  language.Add( "tool."..gsToolModeOP..".autofill"       , "Write a positive number here and hit ENTER to trigger random text autofill")
   language.Add( "tool."..gsToolModeOP..".description"    , "Write some input description here. Maximum 20 characters! For example `Steering`" )
   language.Add( "tool."..gsToolModeOP..".description_con", "Description")
   language.Add( "tool."..gsToolModeOP..".lcontr"         , "This labels the given set of input control configuration settings" )
@@ -69,12 +70,30 @@ usermessage.Hook("joywarn",function(um)
 end)
 ]]--
 
-function TOOL:SanitizeUID(uid)
+local function SanitizeUID(uid)
   local prf, uid = "jm_", tostring(uid)
   if uid:sub(1,3) ~= prf then
     return prf..uid
   end
   return uid
+end
+
+local function DeSanitizeUID(uid)
+  local prf, uid = "jm_", tostring(uid)
+  if uid:sub(1,3) ~= prf then
+    return uid:sub(4, -1)
+  end
+  return uid
+end
+
+local function GetRandomString(nLen)
+  local sMap = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  local nTop, sOut = sMap:len(), ""
+  for iD = 1, nLen do
+    local nRnd = math.random(nTop)
+    sOut = sOut..sMap:sub(nRnd, nRnd)
+  end
+  return sOut
 end
 
 function TOOL:LeftClick( trace )
@@ -89,7 +108,7 @@ function TOOL:LeftClick( trace )
   local status = 0
   for i = 1, 8 do
     local strI = tostring(i)
-    local _uid = self:SanitizeUID(self:GetClientInfo(strI.."uid"))
+    local _uid = SanitizeUID(self:GetClientInfo(strI.."uid"))
 
     -- Check if the player owns the UID, or if the UID is free
     if jcon and wins and wins[_uid] then
@@ -118,7 +137,7 @@ function TOOL:LeftClick( trace )
   for i = 1, 8 do
     local strI = tostring(i)
 
-    local _uid = self:SanitizeUID(self:GetClientInfo(strI.."uid"))
+    local _uid = SanitizeUID(self:GetClientInfo(strI.."uid"))
     local uidvalid,uiderror = jcon.isValidUID(_uid)
     if not uidvalid then
       ErrorNoHalt("Wire Joystick: "..tostring(uiderror).."\n")
@@ -307,6 +326,7 @@ if CLIENT and joystick then
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
 
+  local clRed   = Color(255, 0  ,   0, 255)
   local clBlue  = Color(0  , 0  , 255, 255)
   local clWhite = Color(255, 250, 255, 255)
 
@@ -321,7 +341,7 @@ if CLIENT and joystick then
 
       for i = 1, 8 do
         local strI = tostring(i)
-        local uid = self:SanitizeUID(ply:GetInfo(gsToolPrefix..strI.."uid"))
+        local uid = SanitizeUID(ply:GetInfo(gsToolPrefix..strI.."uid"))
 
         if not jcon then return end
 
@@ -376,21 +396,10 @@ if CLIENT and joystick then
   end
 end
 
-local function getRandomString(nLen, nMax)
-  local nEnd = math.Clamp(math.floor(tonumber(nLen) or 0), 0, nMax)
-  local sMap = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  local nTop, sOut = sMap:len(), ""
-  for iD = 1, nEnd do
-    local nRnd = math.random(nTop)
-    sOut = sOut..sMap:sub(nRnd, nRnd)
-  end
-  return sOut
-end
-
 local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
-  local psName = "tool."..gsToolModeOP.."."..sName
+  local psPref = "tool."..gsToolModeOP.."."
   local pnConv = gsToolPrefix..sID..sName
-  local pnText, pnName = pnBase:TextEntry(language.GetPhrase(psName.."_con"))
+  local pnText, pnName = pnBase:TextEntry(language.GetPhrase(psPref..sName.."_con"), pnConv)
   pnText.OnChange = function(pnSelf)
     local sTxt = pnSelf:GetText()
     local sPat, sNew = tostring(sPattern or ""), sTxt:Trim()
@@ -403,22 +412,21 @@ local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
     return ((pnSelf:GetText():len() >= nLen) and true or false)
   end
   pnText.OnLoseFocus = function(pnSelf)
-    local sVar = GetConVar(pnConv):GetString()
-          sVar = sVar:gsub("jm_", "")
-    pnSelf:SetText(sVar)
+    pnSelf:SetText(DeSanitizeUID(GetConVar(pnConv):GetString()))
   end
   pnText.OnEnter = function(pnSelf)
     local sTxt = pnSelf:GetText()
-    local nTop = (tonumber(sTxt) or 0)
-    if(nTop <= 0) then return end
-    sRnd = getRandomString(nTop, nLen)
-    RunConsoleCommand(pnConv, sRnd)
+    local nEnd = math.floor(tonumber(sTxt) or 0)
+    if(nEnd <= 0) then return end
+    local sRnd = GetRandomString(math.min(nEnd, nLen))
     pnSelf:SetText(sRnd)
+    RunConsoleCommand(pnConv, sRnd)
   end
   pnText:SetUpdateOnType(true)
   pnText:SetEnterAllowed(true)
   pnText:SetEditable(true)
-  pnText:SetTooltip(language.GetPhrase(psName))
+  pnText:SetTooltip(language.GetPhrase(psPref..sName))
+  pnName:SetTooltip(language.GetPhrase(psPref.."autofill"))
 end
 
 local gtConvarList = TOOL:BuildConVarList()
