@@ -109,12 +109,25 @@ function TOOL:GetControlDescr(sIdx)
 end
 
 function TOOL:GetControlType(sIdx)
-  return ((self:GetClientNumber(sIdx.."analog", 0) == 1) and "analog" or "digital")
+  return ((self:GetClientNumber(sIdx.."analog", 0) ~= 0) and "analog" or "digital")
 end
 
 function TOOL:GetControlBorder(sIdx)
   return self:GetClientNumber(sIdx.."min", 0),
          self:GetClientNumber(sIdx.."max", 0)
+end
+
+function TOOL:GetNormalSpawn(stTr, eEnt)
+  local vNorm = Vector(stTr.HitPos)
+  local aNorm = stTr.HitNormal:Angle()
+        aNorm.pitch = aNorm.pitch + 90
+  if not ( eEnt and eEnt:IsValid() ) then
+    return vNorm, aNorm
+  end
+  vNorm:Set(stTr.HitNormal)
+  vNorm:Mul(-eEnt:OBBMins().z)
+  vNorm:Add(stTr.HitPos)
+  return vNorm, aNorm
 end
 
 function TOOL:LeftClick(tr)
@@ -160,9 +173,9 @@ function TOOL:LeftClick(tr)
     local strI = tostring(i)
 
     local _uid = self:GetControlUID(strI)
-    local uidvalid,uiderror = jcon.isValidUID(_uid)
-    if not uidvalid then
-      ErrorNoHalt("Wire Joystick: "..tostring(uiderror).."\n")
+    local ok, err = jcon.isValidUID(_uid)
+    if not ok then
+      ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
       return false
     end
     local _type = self:GetControlType(strI)
@@ -188,9 +201,7 @@ function TOOL:LeftClick(tr)
       end
     end
 
-    if status == 2 then
-      return false
-    end
+    if status == 2 then return false end
 
     table.insert(pass, _uid)
     table.insert(pass, _type)
@@ -201,27 +212,34 @@ function TOOL:LeftClick(tr)
     if (tr.Entity:IsValid() and
         tr.Entity:GetClass() == gsSentClasMK and
         tr.Entity:GetTable().pl == ply) then
-      tr.Entity:Update( unpack(pass) )
-      return true -- If we're updating, exit now
+        tr.Entity:Update( unpack(pass) )
+        return true -- If we're updating, exit now
+    end
+  end
+  -- Make sure the trace result is not updated
+  local vPos, aAng = self:GetNormalSpawn(tr)
+  local eJoystick = MakeWireJoystick_Multi(ply, vPos, aAng, unpack(pass))
+  if not (eJoystick and eJoystick:IsValid()) then return end
+
+  vPos, aAng = self:GetNormalSpawn(tr, eJoystick)
+  eJoystick:SetPos(vPos)
+  eJoystick:SetAngles(aAng)
+
+  undo.Create("Wire Joystick Multi")
+  undo.AddEntity( eJoystick )
+
+  if( constraint.CanConstrain(tr.Entity, 0) ) then
+    local cWeld = WireLib.Weld(eJoystick, tr.Entity, tr.PhysicsBone, true, true)
+    if( cWeld and cWeld:IsValid() ) then
+      eJoystick:DeleteOnRemove( cWeld )
+      undo.AddEntity( cWeld )
     end
   end
 
-  local Ang = tr.HitNormal:Angle()
-        Ang.pitch = Ang.pitch + 90
-
-  local eJoystick = MakeWireJoystick_Multi(ply, tr.HitPos, Ang, unpack(pass))
-  if not (eJoystick and eJoystick:IsValid()) then return end
-
-  eJoystick:SetPos(tr.HitPos - tr.HitNormal * eJoystick:OBBMins().z)
-
-  local cWeld = WireLib.Weld(eJoystick, tr.Entity, tr.PhysicsBone, true, true)
-
-  undo.Create("Wire Joystick Multi")
-    undo.AddEntity( eJoystick )
-    undo.AddEntity( cWeld )
-    undo.SetPlayer( ply )
+  undo.SetPlayer( ply )
   undo.Finish()
 
+  ply:AddCount  ( gsToolLimits, eJoystick )
   ply:AddCleanup( gsToolLimits, eJoystick )
 
   return true
@@ -276,35 +294,6 @@ function TOOL:Reload(tr)
   end
 end
 
---[[
-if SERVER then
-
-  function MakeWirejoystick_multi(pl,Pos,Ang,...) -- UID,type,description,min,max)
-    if ( not pl:CheckLimit( gsToolLimits ) ) then return false end
-
-    local wire_joystick = ents.Create( gsSentClasMK )
-    if (not wire_joystick:IsValid()) then return false end
-
-    wire_joystick:SetAngles( Ang )
-    wire_joystick:SetPos( Pos )
-    wire_joystick:SetModel( Model("models/jaanus/wiretool/wiretool_range.mdl") )
-    wire_joystick:Spawn()
-
-    wire_joystick:Setup(pl,unpack(arg))//UID,type,description,min,max)
-
-    wire_joystick:SetPlayer( pl )
-    wire_joystick.pl = pl
-
-    pl:AddCount( gsToolLimits, wire_joystick )
-
-    return wire_joystick
-  end
-
-  duplicator.RegisterEntityClass( gsSentClasMK, MakeWirejoystick_multi, unpack(multi_varlist) )
-
-end
-]]--
-
 function TOOL:UpdateGhostWirejoystick( ent, ply )
   if (not ent or not ent:IsValid()) then return end
 
@@ -313,22 +302,20 @@ function TOOL:UpdateGhostWirejoystick( ent, ply )
   if (not tr.Hit or
           tr.Entity:IsPlayer() or
           tr.Entity:GetClass() == gsSentClasMK) then
-    ent:SetNoDraw( true )
-    return
+    ent:SetNoDraw( true ); return
   end
 
-  local Ang = tr.HitNormal:Angle()
-        Ang.pitch = Ang.pitch + 90
+  local vPos, aAng = self:GetNormalSpawn(tr, ent)
 
-  ent:SetPos( tr.HitPos - tr.HitNormal * ent:OBBMins().z )
-  ent:SetAngles( Ang )
+  ent:SetPos( vPos )
+  ent:SetAngles( aAng )
   ent:SetNoDraw( false )
 end
 
 function TOOL:Think()
   if (not self.GhostEntity or
       not self.GhostEntity:IsValid() or
-          self.GhostEntity:GetModel() != self.Model) then
+          self.GhostEntity:GetModel() ~= self.Model) then
     self:MakeGhostEntity( self.Model, Vector(0,0,0), Angle(0,0,0) )
   end
 
@@ -404,9 +391,9 @@ local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
   pnText.OnChange = function(pnSelf)
     local sTxt = pnSelf:GetText()
     local sPat, sNew = tostring(sPattern or ""), sTxt:Trim()
-        sNew = (sPat == "") and sNew or sNew:gsub("["..sPat.."]", "X")
+          sNew = (sPat == "") and sNew or sNew:gsub("["..sPat.."]", "X")
     if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
-    if(sNew != sTxt) then ChangeTooltip(pnSelf) end
+    if(sNew ~= sTxt) then ChangeTooltip(pnSelf) end
     RunConsoleCommand(pnConv, sNew)
   end
   pnText.AllowInput = function(pnSelf, chData)
