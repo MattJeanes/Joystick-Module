@@ -20,7 +20,7 @@ if CLIENT then
     { name = "reload"}
   }
 
-  language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Multi Tool (Wire)" )
+  language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Tool (Wire)" )
   language.Add( "tool."..gsToolModeOP..".desc"           , "Spawns a Joystick Module interface chip for use with the wire system" )
   language.Add( "tool."..gsToolModeOP..".left"           , "Create / Update joystick" )
   language.Add( "tool."..gsToolModeOP..".right"          , "Copy joystick settings. Hit world to open configuration" )
@@ -29,7 +29,7 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 character limit!" )
   language.Add( "tool."..gsToolModeOP..".uid_con"        , "UID")
   language.Add( "tool."..gsToolModeOP..".autofill"       , "Write a positive number here and hit ENTER to trigger random text autofill")
-  language.Add( "tool."..gsToolModeOP..".description"    , "Write some input description here. Maximum 20 characters! For example `Steering`" )
+  language.Add( "tool."..gsToolModeOP..".description"    , "Write some input description here. Maximum 20 characters! For example 'Steering'" )
   language.Add( "tool."..gsToolModeOP..".description_con", "Description")
   language.Add( "tool."..gsToolModeOP..".lcontr"         , "This labels the given set of input control configuration settings" )
   language.Add( "tool."..gsToolModeOP..".lcontr_con"     , "Control configuration:" )
@@ -39,12 +39,12 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".minoff_con"     , "Minimum / Off" )
   language.Add( "tool."..gsToolModeOP..".analog"         , "Enable this when your source is analogue input" )
   language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
-  language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open the joystick configuration. You can also right click on the world" )
+  language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open joystick configuration. You can also right click on the world" )
   language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
-  language.Add( "undone_"..gsToolModeOP, "Undone Wire Joystick !" )
-  language.Add( "sboxlimit_"..gsToolLimits, "You've hit the Joysticks limit!" )
-  language.Add( "cleanup_" .. gsToolLimits, "Wire Joystick chips" )
-  language.Add( "cleaned_" .. gsToolLimits, "Cleaned up all Joystick chips" )
+  language.Add( "undone_"..gsToolModeOP                  , "Undone Wire Joystick !" )
+  language.Add( "sboxlimit_"..gsToolLimits               , "You've hit the Joystick limit !" )
+  language.Add( "cleanup_" .. gsToolLimits               , "Wire Joystick chips" )
+  language.Add( "cleaned_" .. gsToolLimits               , "Cleaned up all Joystick chips !" )
 end
 
 if SERVER then
