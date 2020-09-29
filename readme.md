@@ -18,7 +18,7 @@ Merge the [`addons`][ref-addons] and [`lua`][ref-luabin] folders from this folde
   2. Run the [`install.bat`][ref-winstall] installation script
   3. Delete the [`clonned repository`][ref-repo] **_manually_** !
   
-#### Linux
+#### Linux:
   1. Clone the repository inside `../garrysmod/addons`
   2. Right click in the cloned folder. `Open in therminal`
   3. Run `sudo chmod +x install.sh` and write your password
