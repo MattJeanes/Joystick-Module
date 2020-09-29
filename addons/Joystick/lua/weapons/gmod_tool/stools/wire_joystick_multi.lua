@@ -4,7 +4,7 @@ local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
 local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-TOOL.Tab        = "Wire"
+TOOL.Tab        = gsToolModeOP:match("%w+"):gsub("^%l", string.upper)
 TOOL.Category   = "Input, Output"
 TOOL.Name       = gsToolModeOP:gsub("wire",""):gsub("%W+", " "):gsub("%s+%w", string.upper):sub(2, -1)
 TOOL.Command    = nil
@@ -26,7 +26,7 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".right"          , "Copy joystick settings. Hit world to open configuration" )
   language.Add( "tool."..gsToolModeOP..".reload"         , "Link joystick to pod controller" )
   language.Add( "tool."..gsToolModeOP..".1"              , "Now select the pod to link to, or anything other than a pod to revert.")
-  language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 character limit!" )
+  language.Add( "tool."..gsToolModeOP..".uid"            , "Unique identifier. No spaces, alphanumeric, 17 charater limit!" )
   language.Add( "tool."..gsToolModeOP..".uid_con"        , "UID")
   language.Add( "tool."..gsToolModeOP..".autofill"       , "Write a positive number here and hit ENTER to trigger random text autofill")
   language.Add( "tool."..gsToolModeOP..".description"    , "Write some input description here. Maximum 20 characters! For example `Steering`" )
@@ -39,12 +39,12 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".minoff_con"     , "Minimum / Off" )
   language.Add( "tool."..gsToolModeOP..".analog"         , "Enable this when your source is analogue input" )
   language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
-  language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open the joystick configuration. You can also right click on the world" )
+  language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open joystick configuration. You can also righ click on the world" )
   language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
-  language.Add( "undone_"..gsToolModeOP, "Undone Wire Joystick Multi" )
-  language.Add( "sboxlimit_"..gsToolLimits, "You've hit the Joystick Multi limit!" )
-  language.Add( "cleanup_" .. gsToolLimits, "Wire Joystick Multi chips " )
-  language.Add( "cleaned_" .. gsToolLimits, "Cleaned up all Joystick Multi chips" )
+  language.Add( "undone_"..gsToolModeOP, "Undone Wire Joystick !" )
+  language.Add( "sboxlimit_"..gsToolLimits, "You've hit the Joysticks limit!" )
+  language.Add( "cleanup_" .. gsToolLimits, "Wire Joystick chips" )
+  language.Add( "cleaned_" .. gsToolLimits, "Cleaned up all Joystick chips" )
 end
 
 if SERVER then
