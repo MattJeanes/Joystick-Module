@@ -14,10 +14,10 @@ TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
 if CLIENT then
 
   TOOL.Information = {
-    { name = "info",  stage = 1   },
-    { name = "left"      },
-    { name = "right"     },
-    { name = "reload"    }
+    { name = "info"   , stage = 1},
+    { name = "left"  },
+    { name = "right" },
+    { name = "reload"}
   }
 
   language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Multi Tool (Wire)" )
