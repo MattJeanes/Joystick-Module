@@ -327,17 +327,22 @@ if CLIENT and joystick then
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
 
+  local clBlack = Color( 0  , 0  ,   0, 255 )
   local clBlue  = Color( 0  , 0  , 255, 255 )
   local clWhite = Color( 255, 250, 255, 255 )
-
+  local clRed   = Color( 255, 0  , 0  , 255 )
+  local clGreen = Color( 0  , 255, 0  , 255 )
+  local clInBnd = Color( 255, 165,   0, 255 )
+  local clInAct = Color(  32, 178, 170, 255 )
+  
   function TOOL:DrawToolScreen(w, h)
     local b, e = pcall(function()
       local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
-      surface.SetDrawColor(0, 0, 0, 255)
+      surface.SetDrawColor(clBlack)
       surface.DrawRect(0, 0, w, h)
       draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,clWhite,0)
-      local y, ply = 36, LocalPlayer()
-      local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
+      local x, y, ply = (w / 2) 36, LocalPlayer()
+      local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
       for i = 1, 8 do
         if not jcon then return end
         local strI = tostring(i)
@@ -351,33 +356,34 @@ if CLIENT and joystick then
               local _min, _max = self:GetControlBorder(strI)
               local disp = w * ((val - reg.min) / (reg.max - reg.min))
               local text = (tonumber(val) or 0) / 255 * (_max - _min) + _min
-              surface.SetDrawColor(255, 0, 0, 255)
-              surface.DrawRect(0, y, w, siz)
-              surface.SetDrawColor(0, 255, 0, 255)
-              surface.DrawRect(0, y, disp, siz)
-              draw.DrawText(math.Round(text), "Trebuchet20", w / 2, y, clBlue, 1)
+              surface.SetDrawColor(clRed)
+              surface.DrawRect(0, y, w, s)
+              surface.SetDrawColor(clGreen)
+              surface.DrawRect(0, y, disp, s)
+              draw.DrawText(math.Round(text), "Trebuchet20", x, y, clBlue, 1)
             elseif type(val) == "boolean" then
               local _min, _max = self:GetControlBorder(strI)
-              surface.SetDrawColor(255, 0, 0, 255)
-              surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0, 255, 0, 255)
-              if val then surface.DrawRect(0, y, w, siz) end
-              draw.DrawText(val and _max or _min, "Trebuchet20", w / 2, y, clBlue, 1)
+              local text = (val and _max or _min)
+              surface.SetDrawColor(clRed)
+              surface.DrawRect(0, y, w, s)
+              surface.SetDrawColor(clGreen)
+              if val then surface.DrawRect(0, y, w, s) end
+              draw.DrawText(text, "Trebuchet20", x, y, clBlue, 1)
             end
-            draw.DrawText(reg:GetDeviceName() or "", "Trebuchet12", 4, y + siz - 12, clWhite, 0)
+            draw.DrawText(reg:GetDeviceName() or "N/A", "Trebuchet12", 4, y + s - 12, clWhite, 0)
           else
-            surface.SetDrawColor(255, 165, 0, 255)
-            surface.DrawRect(0, y, w, siz)
-            draw.DrawText(_uid.." unbound","Trebuchet20", w / 2, y, clBlue, 1)
+            surface.SetDrawColor(clInBnd)
+            surface.DrawRect(0, y, w, s)
+            draw.DrawText(_uid,"Trebuchet20", x, y, clBlue, 1)
           end
         else
-          surface.SetDrawColor(32,178,170,255)
-          surface.DrawRect(0,y,w,siz)
-          draw.DrawText(_uid.." inactive", "Trebuchet20", w / 2, y, clBlue, 1)
+          surface.SetDrawColor(clInAct)
+          surface.DrawRect(0, y, w, s)
+          draw.DrawText(_uid, "Trebuchet20", x, y, clBlue, 1)
         end
         draw.DrawText(_uid, "Trebuchet12", 4, y, clWhite, 0)
         draw.DrawText(_type, "Trebuchet12", w - 4, y, clWhite, 2)
-        y = y + siz
+        y = y + s
       end
     end)
     if not b then ErrorNoHalt(e,"\n") end
