@@ -4,9 +4,9 @@ local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
 local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-TOOL.Tab        = gsToolModeOP:match("%w+"):gsub("^%l", string.upper)
+TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
-TOOL.Name       = gsToolModeOP:match("%w+$"):gsub("^%l", string.upper)
+TOOL.Name       = "Joystick"
 TOOL.Command    = nil
 TOOL.ConfigName = ""
 TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
@@ -41,10 +41,10 @@ if ( CLIENT ) then
   language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
   language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open the joystick configuration. You can also right click on the world" )
   language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
-  language.Add( "undone_"..gsToolModeOP                  , "Undone Wire Joystick !" )
-  language.Add( "sboxlimit_"..gsToolLimits               , "You've hit the Joystick limit !" )
+  language.Add( "undone_"..gsToolModeOP                  , "Undone Wire Joystick!" )
+  language.Add( "sboxlimit_"..gsToolLimits               , "You've hit the Joystick limit!" )
   language.Add( "cleanup_" .. gsToolLimits               , "Wire Joystick chips" )
-  language.Add( "cleaned_" .. gsToolLimits               , "Cleaned up all Joystick chips !" )
+  language.Add( "cleaned_" .. gsToolLimits               , "Cleaned up all Joystick chips!" )
 end
 
 if (SERVER) then
