@@ -341,7 +341,7 @@ if CLIENT and joystick then
       surface.SetDrawColor(clBlack)
       surface.DrawRect(0, 0, w, h)
       draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,clWhite,0)
-      local x, y, ply = (w / 2) 36, LocalPlayer()
+      local x, y, ply = (w / 2), 36, LocalPlayer()
       local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
       for i = 1, 8 do
         if not jcon then return end
