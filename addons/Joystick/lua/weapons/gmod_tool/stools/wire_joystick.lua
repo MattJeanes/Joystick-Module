@@ -351,14 +351,14 @@ if CLIENT and joystick then
   end
 end
 
-local function setupTextEntry(pnBase, sName, sPattern, nLen)
+local function setupTextEntry(pnBase, sName, sRem, nLen)
   local psPref = "tool."..gsToolModeOP.."."
   local pnConv = gsToolPrefix..sName
   local pnText, pnName = pnBase:TextEntry(language.GetPhrase(psPref..sName.."_con"), pnConv)
   pnText.OnChange = function(pnSelf)
     local sTxt = pnSelf:GetText()
-    local sPat, sNew = tostring(sPattern or ""), sTxt:Trim()
-          sNew = (sPat == "") and sNew or sNew:gsub("["..sPat.."]", "X")
+    local sPat, sNew = tostring(sRem or ""), sTxt:Trim()
+          sNew = (sPat == "") and sNew or sNew:gsub(sPat, "X")
     if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
     if(sNew ~= sTxt) then ChangeTooltip(pnSelf) end
     RunConsoleCommand(pnConv, sNew)
@@ -401,8 +401,8 @@ function TOOL.BuildCPanel(panel)
     "Multiple devices with the same UID will receive from the same input, but may have different max/min settings.")
   pItem = panel:Help(language.GetPhrase("tool."..gsToolModeOP..".lcontr_con"))
   pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".lcontr"))
-  setupTextEntry(panel, "uid"        , "%s%W", 17)
-  setupTextEntry(panel, "description", ""    , 20)
+  setupTextEntry(panel, "uid"        , "[%s%W]", 17)
+  setupTextEntry(panel, "description",   nil   , 20)
   pItem = panel:CheckBox(language.GetPhrase("tool."..gsToolModeOP..".analog_con"), gsToolPrefix.."analog")
   pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".analog"))
   pItem = panel:NumSlider(language.GetPhrase("tool."..gsToolModeOP..".minoff_con"), gsToolPrefix.."min", -10, 10, 0)
