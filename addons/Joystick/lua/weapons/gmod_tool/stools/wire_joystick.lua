@@ -171,7 +171,7 @@ function TOOL:LeftClick(tr)
       tr.Entity:GetTable().pl == ply and
       tr.Entity:GetClass() == gsSentClasMK) then
       tr.Entity:Update(_uid, _type, _description, _min, _max)
-    return true -- If we're updating, exit now
+      return true -- If we're updating, exit now
   end
 
   -- Make sure the trace result is not updated
