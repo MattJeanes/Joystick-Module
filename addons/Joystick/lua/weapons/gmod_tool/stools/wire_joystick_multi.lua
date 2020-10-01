@@ -163,9 +163,7 @@ function TOOL:LeftClick(tr)
   end
 
   -- Conflicting UID, exit
-  if status == 2 then
-    return false
-  end
+  if status == 2 then return false end
 
   -- Validate and update
   local pass = {}
