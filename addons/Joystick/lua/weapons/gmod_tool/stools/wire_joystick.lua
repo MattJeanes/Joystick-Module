@@ -166,11 +166,12 @@ function TOOL:LeftClick(tr)
     return false
   end
 
-  if ( tr.Entity:IsValid() and
-       tr.Entity:GetClass() == gsSentClasMK and
-       tr.Entity:GetTable().pl == ply ) then
-    tr.Entity:Update(_uid, _type, _description, _min, _max)
-    return true
+  if (tr.Entity:IsValid() and
+      tr.Entity:GetTable() and
+      tr.Entity:GetTable().pl == ply and
+      tr.Entity:GetClass() == gsSentClasMK) then
+      tr.Entity:Update(_uid, _type, _description, _min, _max)
+    return true -- If we're updating, exit now
   end
 
   -- Make sure the trace result is not updated
