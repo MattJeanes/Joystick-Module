@@ -320,7 +320,7 @@ if CLIENT and joystick then
         if type(val) == "number" then
           local disp = w*((val - reg.min)/(reg.max - reg.min))
           local text = ((tonumber(val) or 0) / 255 * (_max -_min) + _min)
-                text = ("%.1f"):format(math.Round(text, 1))
+                text = ("%+.2f"):format(math.Round(text, 2))
           surface.SetDrawColor(clRed)
           surface.DrawRect(0, m, w, s)
           surface.SetDrawColor(clGreen)
