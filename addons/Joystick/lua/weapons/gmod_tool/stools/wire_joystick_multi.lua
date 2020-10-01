@@ -208,14 +208,16 @@ function TOOL:LeftClick(tr)
     table.insert(pass, _description)
     table.insert(pass, _min)
     table.insert(pass, _max)
-
-    if (tr.Entity:IsValid() and
-        tr.Entity:GetClass() == gsSentClasMK and
-        tr.Entity:GetTable().pl == ply) then
-        tr.Entity:Update( unpack(pass) )
-        return true -- If we're updating, exit now
-    end
   end
+
+  if (tr.Entity:IsValid() and
+      tr.Entity:GetTable() and
+      tr.Entity:GetTable().pl == ply and
+      tr.Entity:GetClass() == gsSentClasMK) then
+      tr.Entity:Update( unpack(pass) )
+      return true -- If we're updating, exit now
+  end
+
   -- Make sure the trace result is not updated
   local vPos, aAng = self:GetNormalSpawn(tr)
   local eJoystick = MakeWireJoystick_Multi(ply, vPos, aAng, unpack(pass))
