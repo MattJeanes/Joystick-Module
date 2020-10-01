@@ -282,6 +282,7 @@ end
 if CLIENT and joystick then
   surface.CreateFont("Trebuchet50", {size = 50, weight = 500, antialias = true, font = "trebuchet"})
   surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, font = "trebuchet"})
+  surface.CreateFont("Trebuchet22", {size = 22, weight = 500, antialias = true, font = "trebuchet"})
 
   local clWhite = Color( 255, 250, 255, 255 )
   local clBlack = Color(   0,   0,   0, 255 )
@@ -294,59 +295,62 @@ if CLIENT and joystick then
   local clInBnd = Color( 255, 165,   0, 255 )
   local clInAct = Color(  32, 178, 170, 255 )
 
-  function TOOL:DrawToolScreen(w,h)
-    local b, e = pcall(function()
-      local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
-      local ply, y, m, s = LocalPlayer(), 0, (0.618 * h - 16), 75
-      local drwX, devY, txtY = (w / 2), (h - 40), (m + s / 10)
-      surface.SetDrawColor(clBlack)
-      surface.DrawRect(0, 0, w, h)
-      draw.DrawText("Joystick Tool", "Trebuchet36", 4, 0, clWhite, TEXT_ALIGN_LEFT); y = y + 36
-      local _uid = self:GetControlUID()
-      local _type = self:GetControlType()
-      local _desc = self:GetControlDescr()
-      local _min, _max = self:GetControlBorder()
-      draw.DrawText("UID: ".._uid,"Trebuchet24", 0, y, clGreen, TEXT_ALIGN_LEFT); y = y + 24
-      draw.DrawText("Desc: ".._desc,"Trebuchet24", 0, y, clMagen, TEXT_ALIGN_LEFT); y = y + 24
-      draw.DrawText("Type: ".._type,"Trebuchet24", 0, y, clCyan, TEXT_ALIGN_LEFT); y = y + 24
-      draw.DrawText("Min: ".._min,"Trebuchet24", 5, y + 5, clYello, TEXT_ALIGN_LEFT)
-      draw.DrawText("Max: ".._max,"Trebuchet24", w - 5, y + 5, clYello, TEXT_ALIGN_RIGHT)
-      if not jcon then return end
+  local function drawToolScreen(oTool, nW, nH)
+    local w, h = (tonumber(nW) or 256), (tonumber(nH) or 256)
+    local ply, y, m, s = LocalPlayer(), 0, (0.618 * h - 16), 75
+    local drwX, devY, txtY = (w / 2), (h - 32), (m + s / 10)
+    surface.SetDrawColor(clBlack)
+    surface.DrawRect(0, 0, w, h)
+    draw.DrawText("Joystick Tool", "Trebuchet36", 4, 0, clWhite, TEXT_ALIGN_LEFT); y = y + 36
+    local _uid = oTool:GetControlUID()
+    local _type = oTool:GetControlType()
+    local _desc = oTool:GetControlDescr()
+    local _min, _max = oTool:GetControlBorder()
+    draw.DrawText("UID: ".._uid,"Trebuchet24", 0, y, clGreen, TEXT_ALIGN_LEFT); y = y + 24
+    draw.DrawText("Desc: ".._desc,"Trebuchet24", 0, y, clMagen, TEXT_ALIGN_LEFT); y = y + 24
+    draw.DrawText("Type: ".._type,"Trebuchet24", 0, y, clCyan, TEXT_ALIGN_LEFT); y = y + 24
+    draw.DrawText("Min: ".._min,"Trebuchet24", 5, y + 5, clYello, TEXT_ALIGN_LEFT)
+    draw.DrawText("Max: ".._max,"Trebuchet24", w - 5, y + 5, clYello, TEXT_ALIGN_RIGHT)
+    if not jcon then return end
 
-      local reg = jcon.getRegisterByUID(_uid)
-      if reg and reg.IsJoystickReg then
-        if reg:IsBound() then
-          local val = reg:GetValue()
-          if type(val) == "number" then
-            local disp = w*((val - reg.min)/(reg.max - reg.min))
-            local text = ((tonumber(val) or 0) / 255 * (_max -_min) + _min)
-            surface.SetDrawColor(clRed)
-            surface.DrawRect(0, m, w, s)
-            surface.SetDrawColor(clGreen)
-            surface.DrawRect(0, m, disp, s)
-            draw.DrawText(math.Round(text),"Trebuchet50",drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
-          elseif type(val) == "boolean" then
-            local text = (val and _max or _min)
-            surface.SetDrawColor(clRed)
-            surface.DrawRect(0, m, w, s)
-            surface.SetDrawColor(clGreen)
-            if val then surface.DrawRect(0, m, w, s) end
-            draw.DrawText(text, "Trebuchet50", drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
-          end
-          draw.DrawText(reg:GetDeviceName() or "N/A", "Trebuchet36", w, devY, clYello, TEXT_ALIGN_RIGHT)
-        else
-          surface.SetDrawColor(clInBnd)
+    local reg = jcon.getRegisterByUID(_uid)
+    if reg and reg.IsJoystickReg then
+      if reg:IsBound() then
+        local val = reg:GetValue()
+        if type(val) == "number" then
+          local disp = w*((val - reg.min)/(reg.max - reg.min))
+          local text = ((tonumber(val) or 0) / 255 * (_max -_min) + _min)
+                text = ("%.1f"):format(math.Round(text, 1))
+          surface.SetDrawColor(clRed)
           surface.DrawRect(0, m, w, s)
-          draw.DrawText(_uid, "Trebuchet50", drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
-          draw.DrawText("N/A", "Trebuchet36", w, devY, clYello, TEXT_ALIGN_RIGHT)
+          surface.SetDrawColor(clGreen)
+          surface.DrawRect(0, m, disp, s)
+          draw.DrawText(text,"Trebuchet50",drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
+        elseif type(val) == "boolean" then
+          local text = tostring(val and _max or _min)
+          surface.SetDrawColor(clRed)
+          surface.DrawRect(0, m, w, s)
+          surface.SetDrawColor(clGreen)
+          if val then surface.DrawRect(0, m, w, s) end
+          draw.DrawText(text, "Trebuchet50", drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
         end
+        draw.DrawText(reg:GetDeviceName() or "N/A", "Trebuchet22", w, devY, clYello, TEXT_ALIGN_RIGHT)
       else
-        surface.SetDrawColor(clInAct)
+        surface.SetDrawColor(clInBnd)
         surface.DrawRect(0, m, w, s)
         draw.DrawText(_uid, "Trebuchet50", drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
-        draw.DrawText("N/A", "Trebuchet36", w, devY, clYello, TEXT_ALIGN_RIGHT)
+        draw.DrawText("N/A", "Trebuchet22", w, devY, clYello, TEXT_ALIGN_RIGHT)
       end
-    end)
+    else
+      surface.SetDrawColor(clInAct)
+      surface.DrawRect(0, m, w, s)
+      draw.DrawText(_uid, "Trebuchet50", drwX, txtY, clBlue, TEXT_ALIGN_CENTER)
+      draw.DrawText("N/A", "Trebuchet22", w, devY, clYello, TEXT_ALIGN_RIGHT)
+    end
+  end
+
+  function TOOL:DrawToolScreen(w, h)
+    local b, e = pcall(drawToolScreen, self, w, h)
     if not b then ErrorNoHalt(e, "\n") end
   end
 end
