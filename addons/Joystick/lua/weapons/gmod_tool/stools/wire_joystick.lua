@@ -3,6 +3,7 @@ local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
 local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+local gvGhostZero, gaGhostZero = Vector(), Angle()
 
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
@@ -97,8 +98,15 @@ local function GetRandomString(nLen)
   return sOut
 end
 
-function TOOL:GetControlUID()
-  return SanitizeUID(self:GetClientInfo("uid"))
+function TOOL:GetControlUID(bVal)
+  local out = SanitizeUID(self:GetClientInfo("uid"))
+  if ( bVal ) then -- Force validation of UID
+    local ok, err = jcon.isValidUID(out)
+    if ( not ok ) then out = nil
+      ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
+    end -- Validate the UID when requested
+  end
+  return out
 end
 
 function TOOL:GetControlDescr()
@@ -127,44 +135,49 @@ function TOOL:GetNormalSpawn(stTr, eEnt)
   return vNorm, aNorm
 end
 
-function TOOL:LeftClick(tr)
-  if (not tr.HitPos) then return false end
-  if (tr.Entity:IsPlayer()) then return false end
-  if ( CLIENT ) then return true end
+function TOOL:CheckOwnUID(sUID, uNtf, bJM)
+  local ply, stat = self:GetOwner(), 0
+  local wins = jcon and jcon.wireModInstances or nil
 
-  local ply, status = self:GetOwner(), 0
-  local _uid = self:GetControlUID()
+  -- Check if the player owns the UID, or if the UID is free
+  if jcon and wins and wins[sUID] then
+    for k, v in pairs(wins[sUID]) do
+      if v == ply then
+        stat = 1
+      elseif ( bJM and sUID == "jm_" ) then
+        -- Maybe some custom override code in later dev..
+        -- Allow override, everyone is allowed to use "jm_"
+      elseif stat ~= 1 then
+        stat = 2
+        umsg.Start("joywarn",ply)
+          umsg.Short(uNtf)
+          umsg.String(sUID)
+        umsg.End()
+      end
+    end
+  end
+
+  return stat
+end
+
+function TOOL:LeftClick(tr)
+  if CLIENT then return true end
+  if (not tr.Hit) then return false end
+  if (tr.Entity:IsPlayer()) then return false end
+
+  local ply = self:GetOwner()
+  local _uid = self:GetControlUID(true)
+  if( not _uid ) then return false end
+
   local _type = self:GetControlType()
   local _description = self:GetControlDescr()
   local _min, _max = self:GetControlBorder()
 
   if (not ply:CheckLimit( gsToolLimits )) then return false end
 
-  local wins = jcon and jcon.wireModInstances or nil
-
   -- Check if the player owns the UID, or if the UID is free
-  if jcon and wins and wins[_uid] then
-    for k,v in pairs(wins[_uid]) do
-      if v == ply then
-        status = 1
-      elseif status ~= 1 then
-        status = 2
-      end
-    end
-  end
-
-  if status == 2 then
-    umsg.Start("joywarn",ply)
-      umsg.Short(1)
-    umsg.End()
-    return false
-  end
-
-  local ok, err = jcon.isValidUID(_uid)
-  if not ok then
-    ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
-    return false
-  end
+  local stat = self:CheckOwnUID(_uid, 1)
+  if ( stat == 2 ) then return false end
 
   if (tr.Entity:IsValid() and
       tr.Entity:GetTable() and
@@ -204,6 +217,7 @@ function TOOL:LeftClick(tr)
 end
 
 function TOOL:RightClick(tr)
+  if CLIENT then return true end
   local ply = self:GetOwner()
   if tr.Entity:IsValid() then
     if (tr.Entity:GetClass() == gsSentClasMK and
@@ -227,8 +241,7 @@ function TOOL:RightClick(tr)
 end
 
 function TOOL:Reload(tr)
-  if ( CLIENT ) then return true end
-
+  if CLIENT then return true end
   if (self:GetStage() == 0) and
       tr.Entity:GetClass() == gsSentClasMK then
     self.PodCont = tr.Entity
@@ -252,12 +265,13 @@ function TOOL:Reload(tr)
   end
 end
 
-function TOOL:UpdateGhostWirejoystick( ent, player )
+function TOOL:UpdateGhost( ent, player )
   if ( not ent or not ent:IsValid() ) then return end
 
   local tr = player:GetEyeTrace()
 
   if (not tr.Hit or
+      not tr.Entity or
           tr.Entity:IsPlayer() or
           tr.Entity:GetClass() == gsSentClasMK ) then
     ent:SetNoDraw( true ); return
@@ -274,10 +288,10 @@ function TOOL:Think()
   if (not self.GhostEntity or
       not self.GhostEntity:IsValid() or
           self.GhostEntity:GetModel() ~= self.Model ) then
-    self:MakeGhostEntity( self.Model, Vector(0,0,0), Angle(0,0,0) )
+    self:MakeGhostEntity( self.Model, gvGhostZero, gaGhostZero )
   end
 
-  self:UpdateGhostWirejoystick( self.GhostEntity, self:GetOwner() )
+  self:UpdateGhost( self.GhostEntity, self:GetOwner() )
 end
 
 if CLIENT and joystick then
