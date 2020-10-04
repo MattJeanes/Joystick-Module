@@ -3,6 +3,8 @@ local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
 local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+local gvGhostZero, gaGhostZero = Vector(), Angle()
+
 
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
@@ -100,8 +102,13 @@ local function GetRandomString(nLen)
   return sOut
 end
 
-function TOOL:GetControlUID(sIdx)
-  return SanitizeUID(self:GetClientInfo(sIdx.."uid"))
+function TOOL:GetControlUID(sIdx, bVal)
+  local out = SanitizeUID(self:GetClientInfo(sIdx.."uid"))
+  local ok, err = jcon.isValidUID(out)
+  if ( bVal and not ok ) then out = nil
+    ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
+  end -- Validate the UID when requested
+  return out
 end
 
 function TOOL:GetControlDescr(sIdx)
@@ -130,16 +137,40 @@ function TOOL:GetNormalSpawn(stTr, eEnt)
   return vNorm, aNorm
 end
 
+function TOOL:CheckOwnUID(sUID, uNtf, bJM)
+  local ply, stat = self:GetOwner(), 0
+  local wins = jcon and jcon.wireModInstances or nil
+
+  -- Check if the player owns the UID, or if the UID is free
+  if jcon and wins and wins[sUID] then
+    for k, v in pairs(wins[sUID]) do
+      if v == ply then
+        stat = 1
+      elseif ( bJM and sUID == "jm_" ) then
+        -- Maybe some custom override code in later dev..
+        -- Allow override, everyone is allowed to use "jm_"
+      elseif stat ~= 1 then
+        stat = 2
+        umsg.Start("joywarn",ply)
+          umsg.Short(uNtf)
+          umsg.String(sUID)
+        umsg.End()
+      end
+    end
+  end
+
+  return stat
+end
+
 function TOOL:LeftClick(tr)
+  if CLIENT then return true end
+  if (not tr.Hit) then return false end
   if (not tr.HitPos) then return false end
   if (tr.Entity:IsPlayer()) then return false end
-  if CLIENT then return true end
 
-  local ply, status = self:GetOwner(), 0
+  local ply, okuid = self:GetOwner(), true
 
   if (not ply:CheckLimit( gsToolLimits )) then return false end
-
-  local wins = jcon and jcon.wireModInstances or nil
 
   -- Check all UIDs first so we notify the player of all conflicting UIDs, not just one
   for i = 1, 8 do
@@ -147,59 +178,28 @@ function TOOL:LeftClick(tr)
     local _uid = self:GetControlUID(strI)
 
     -- Check if the player owns the UID, or if the UID is free
-    if jcon and wins and wins[_uid] then
-      for k,v in pairs(wins[_uid]) do
-        if v == ply then
-          status = 1
-        elseif status ~= 1 then
-          status = 2
-          umsg.Start("joywarn",ply)
-            umsg.Short(1)
-            umsg.String(_uid)
-          umsg.End()
-        end
-      end
-    end
+    local stat = self:CheckOwnUID(_uid, 1)
+    if ( stat == 2 and okuid ) then okuid = false end
   end
 
-  -- Conflicting UID, exit
-  if status == 2 then return false end
+  -- Some conflicting UID os not OK then exit
+  if ( not okuid ) then return false end
 
   -- Validate and update
   local pass = {}
   for i = 1, 8 do
     local strI = tostring(i)
+    local _uid = self:GetControlUID(strI, true)
+    if ( not _uid ) then return false end
 
-    local _uid = self:GetControlUID(strI)
-    local ok, err = jcon.isValidUID(_uid)
-    if not ok then
-      ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
-      return false
-    end
+    -- Current UID has been validated
     local _type = self:GetControlType(strI)
     local _description = self:GetControlDescr(strI)
     local _min, _max = self:GetControlBorder(strI)
 
     -- Check if the player owns the UID, or if the UID is free
-    local status = 0
-    if jcon and wins and wins[_uid] then
-      for k,v in pairs(wins[_uid]) do
-        if v == ply then
-          status = 1
-        elseif _uid == "jm_" then
-          -- Allow override, everyone is allowed to use "jm_"
-        elseif status ~= 1 then
-          status = 2
-          -- This usermessage requires stools/wire_joystick.lua
-          umsg.Start("joywarn",ply)
-            umsg.Short(2)
-            umsg.String(_uid)
-          umsg.End()
-        end
-      end
-    end
-
-    if status == 2 then return false end
+    local stat = self:CheckOwnUID(_uid, 2, true)
+    if ( stat == 2 ) then return false end
 
     table.insert(pass, _uid)
     table.insert(pass, _type)
@@ -246,6 +246,7 @@ function TOOL:LeftClick(tr)
 end
 
 function TOOL:RightClick(tr)
+  if CLIENT then return true end
   local ply = self:GetOwner()
   if tr.Entity:IsValid() then
     if (tr.Entity:GetClass() == gsSentClasMK and
@@ -294,12 +295,13 @@ function TOOL:Reload(tr)
   end
 end
 
-function TOOL:UpdateGhostWirejoystick( ent, ply )
+function TOOL:UpdateGhost( ent, ply )
   if (not ent or not ent:IsValid()) then return end
 
   local tr = ply:GetEyeTrace()
 
   if (not tr.Hit or
+      not tr.Entity or
           tr.Entity:IsPlayer() or
           tr.Entity:GetClass() == gsSentClasMK) then
     ent:SetNoDraw( true ); return
@@ -316,10 +318,10 @@ function TOOL:Think()
   if (not self.GhostEntity or
       not self.GhostEntity:IsValid() or
           self.GhostEntity:GetModel() ~= self.Model) then
-    self:MakeGhostEntity( self.Model, Vector(0,0,0), Angle(0,0,0) )
+    self:MakeGhostEntity( self.Model, gvGhostZero, gaGhostZero )
   end
 
-  self:UpdateGhostWirejoystick( self.GhostEntity, self:GetOwner() )
+  self:UpdateGhost( self.GhostEntity, self:GetOwner() )
 end
 
 if CLIENT and joystick then
@@ -337,11 +339,11 @@ if CLIENT and joystick then
 
   local function drawToolScreen(oTool, nW, nH)
     local w, h = (tonumber(nW) or 256), (tonumber(nH) or 256)
+    local x, y, ply = (w / 2), 36, LocalPlayer()
+    local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
     surface.SetDrawColor(clBlack)
     surface.DrawRect(0, 0, w, h)
     draw.DrawText("Joystick Multi Tool", "Trebuchet36", 4, 0, clWhite, 0)
-    local x, y, ply = (w / 2), 36, LocalPlayer()
-    local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
     for i = 1, 8 do
       if not jcon then return end
       local strI = tostring(i)
