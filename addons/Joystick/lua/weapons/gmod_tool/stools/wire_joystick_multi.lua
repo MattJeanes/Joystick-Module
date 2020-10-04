@@ -5,7 +5,6 @@ local gsSentClasMK = "gmod_"..gsToolModeOP
 local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 local gvGhostZero, gaGhostZero = Vector(), Angle()
 
-
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
 TOOL.Name       = "Joystick Multi"
