@@ -6,7 +6,7 @@ local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUV
 
 TOOL.Tab        = "Wire"
 TOOL.Category   = "Input, Output"
-TOOL.Name       = gsToolModeOP:gsub("wire",""):gsub("%W+", " "):gsub("%s+%w", string.upper):sub(2, -1)
+TOOL.Name       = "Joystick Multi"
 TOOL.Command    = nil
 TOOL.ConfigName = ""
 TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
@@ -14,10 +14,10 @@ TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
 if CLIENT then
 
   TOOL.Information = {
-    { name = "info",  stage = 1   },
-    { name = "left"      },
-    { name = "right"     },
-    { name = "reload"    }
+    { name = "info"   , stage = 1},
+    { name = "left"  },
+    { name = "right" },
+    { name = "reload"}
   }
 
   language.Add( "tool."..gsToolModeOP..".name"           , "Joystick Multi Tool (Wire)" )
@@ -41,10 +41,10 @@ if CLIENT then
   language.Add( "tool."..gsToolModeOP..".analog_con"     , "Analog input" )
   language.Add( "tool."..gsToolModeOP..".config"         , "Click this button to open the joystick configuration. You can also right click on the world" )
   language.Add( "tool."..gsToolModeOP..".config_con"     , "Joystick Configuration" )
-  language.Add( "undone_"..gsToolModeOP, "Undone Wire Joystick Multi" )
-  language.Add( "sboxlimit_"..gsToolLimits, "You've hit the Joystick Multi limit!" )
-  language.Add( "cleanup_" .. gsToolLimits, "Wire Joystick Multi chips " )
-  language.Add( "cleaned_" .. gsToolLimits, "Cleaned up all Joystick Multi chips" )
+  language.Add( "undone_"..gsToolModeOP                  , "Undone Wire Joystick Multi!" )
+  language.Add( "sboxlimit_"..gsToolLimits               , "You've hit the Joystick Multi limit!" )
+  language.Add( "cleanup_" .. gsToolLimits               , "Wire Joystick Multi chips" )
+  language.Add( "cleaned_" .. gsToolLimits               , "Cleaned up all Joystick Multi chips!" )
 end
 
 if SERVER then
@@ -163,9 +163,7 @@ function TOOL:LeftClick(tr)
   end
 
   -- Conflicting UID, exit
-  if status == 2 then
-    return false
-  end
+  if status == 2 then return false end
 
   -- Validate and update
   local pass = {}
@@ -208,14 +206,16 @@ function TOOL:LeftClick(tr)
     table.insert(pass, _description)
     table.insert(pass, _min)
     table.insert(pass, _max)
-
-    if (tr.Entity:IsValid() and
-        tr.Entity:GetClass() == gsSentClasMK and
-        tr.Entity:GetTable().pl == ply) then
-        tr.Entity:Update( unpack(pass) )
-        return true -- If we're updating, exit now
-    end
   end
+
+  if (tr.Entity:IsValid() and
+      tr.Entity:GetTable() and
+      tr.Entity:GetTable().pl == ply and
+      tr.Entity:GetClass() == gsSentClasMK) then
+      tr.Entity:Update( unpack(pass) )
+      return true -- If we're updating, exit now
+  end
+
   -- Make sure the trace result is not updated
   local vPos, aAng = self:GetNormalSpawn(tr)
   local eJoystick = MakeWireJoystick_Multi(ply, vPos, aAng, unpack(pass))
@@ -327,71 +327,79 @@ if CLIENT and joystick then
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
 
+  local clBlack = Color( 0  , 0  ,   0, 255 )
   local clBlue  = Color( 0  , 0  , 255, 255 )
   local clWhite = Color( 255, 250, 255, 255 )
+  local clRed   = Color( 255, 0  , 0  , 255 )
+  local clGreen = Color( 0  , 255, 0  , 255 )
+  local clInBnd = Color( 255, 165,   0, 255 )
+  local clInAct = Color(  32, 178, 170, 255 )
+
+  local function drawToolScreen(oTool, nW, nH)
+    local w, h = (tonumber(nW) or 256), (tonumber(nH) or 256)
+    surface.SetDrawColor(clBlack)
+    surface.DrawRect(0, 0, w, h)
+    draw.DrawText("Joystick Multi Tool", "Trebuchet36", 4, 0, clWhite, 0)
+    local x, y, ply = (w / 2), 36, LocalPlayer()
+    local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
+    for i = 1, 8 do
+      if not jcon then return end
+      local strI = tostring(i)
+      local _uid = oTool:GetControlUID(strI)
+      local _type = oTool:GetControlType(strI)
+      local reg = jcon.getRegisterByUID(_uid)
+      if reg and reg.IsJoystickReg then
+        if reg:IsBound() then
+          local val = reg:GetValue()
+          if type(val) == "number" then
+            local _min, _max = oTool:GetControlBorder(strI)
+            local disp = w * ((val - reg.min) / (reg.max - reg.min))
+            local text = (tonumber(val) or 0) / 255 * (_max - _min) + _min
+            surface.SetDrawColor(clRed)
+            surface.DrawRect(0, y, w, s)
+            surface.SetDrawColor(clGreen)
+            surface.DrawRect(0, y, disp, s)
+            draw.DrawText(math.Round(text), "Trebuchet20", x, y, clBlue, 1)
+          elseif type(val) == "boolean" then
+            local _min, _max = oTool:GetControlBorder(strI)
+            local text = (val and _max or _min)
+            surface.SetDrawColor(clRed)
+            surface.DrawRect(0, y, w, s)
+            surface.SetDrawColor(clGreen)
+            if val then surface.DrawRect(0, y, w, s) end
+            draw.DrawText(text, "Trebuchet20", x, y, clBlue, 1)
+          end
+          draw.DrawText(reg:GetDeviceName() or "N/A", "Trebuchet12", 4, y + s - 12, clWhite, 0)
+        else
+          surface.SetDrawColor(clInBnd)
+          surface.DrawRect(0, y, w, s)
+          draw.DrawText(_uid, "Trebuchet20", x, y, clBlue, 1)
+        end
+      else
+        surface.SetDrawColor(clInAct)
+        surface.DrawRect(0, y, w, s)
+        draw.DrawText(_uid, "Trebuchet20", x, y, clBlue, 1)
+      end
+      draw.DrawText(_uid, "Trebuchet12", 4, y, clWhite, 0)
+      draw.DrawText(_type, "Trebuchet12", w - 4, y, clWhite, 2)
+      y = y + s
+    end
+  end
 
   function TOOL:DrawToolScreen(w, h)
-    local b, e = pcall(function()
-      local w, h = (tonumber(w) or 256), (tonumber(h) or 256)
-      surface.SetDrawColor(0, 0, 0, 255)
-      surface.DrawRect(0, 0, w, h)
-      draw.DrawText("Joystick Multi Tool","Trebuchet36",4,0,clWhite,0)
-      local y, ply = 36, LocalPlayer()
-      local siz = math.floor((h - y) / 8) -- No black line at the tool screen bottom
-      for i = 1, 8 do
-        if not jcon then return end
-        local strI = tostring(i)
-        local _uid = self:GetControlUID(strI)
-        local _type = self:GetControlType(strI)
-        local reg = jcon.getRegisterByUID(_uid)
-        if reg and reg.IsJoystickReg then
-          if reg:IsBound() then
-            local val = reg:GetValue()
-            if type(val) == "number" then
-              local _min, _max = self:GetControlBorder(strI)
-              local disp = w * ((val - reg.min) / (reg.max - reg.min))
-              local text = (tonumber(val) or 0) / 255 * (_max - _min) + _min
-              surface.SetDrawColor(255, 0, 0, 255)
-              surface.DrawRect(0, y, w, siz)
-              surface.SetDrawColor(0, 255, 0, 255)
-              surface.DrawRect(0, y, disp, siz)
-              draw.DrawText(math.Round(text), "Trebuchet20", w / 2, y, clBlue, 1)
-            elseif type(val) == "boolean" then
-              local _min, _max = self:GetControlBorder(strI)
-              surface.SetDrawColor(255, 0, 0, 255)
-              surface.DrawRect(0,y,w,siz)
-              surface.SetDrawColor(0, 255, 0, 255)
-              if val then surface.DrawRect(0, y, w, siz) end
-              draw.DrawText(val and _max or _min, "Trebuchet20", w / 2, y, clBlue, 1)
-            end
-            draw.DrawText(reg:GetDeviceName() or "", "Trebuchet12", 4, y + siz - 12, clWhite, 0)
-          else
-            surface.SetDrawColor(255, 165, 0, 255)
-            surface.DrawRect(0, y, w, siz)
-            draw.DrawText(_uid.." unbound","Trebuchet20", w / 2, y, clBlue, 1)
-          end
-        else
-          surface.SetDrawColor(32,178,170,255)
-          surface.DrawRect(0,y,w,siz)
-          draw.DrawText(_uid.." inactive", "Trebuchet20", w / 2, y, clBlue, 1)
-        end
-        draw.DrawText(_uid, "Trebuchet12", 4, y, clWhite, 0)
-        draw.DrawText(_type, "Trebuchet12", w - 4, y, clWhite, 2)
-        y = y + siz
-      end
-    end)
+    local b, e = pcall(drawToolScreen, self, w, h)
     if not b then ErrorNoHalt(e,"\n") end
   end
 end
 
-local function setupTextEntry(pnBase, sName, sID, sPattern, nLen)
+local function setupTextEntry(pnBase, sName, sID, sRem, nLen)
   local psPref = "tool."..gsToolModeOP.."."
   local pnConv = gsToolPrefix..sID..sName
   local pnText, pnName = pnBase:TextEntry(language.GetPhrase(psPref..sName.."_con"), pnConv)
   pnText.OnChange = function(pnSelf)
     local sTxt = pnSelf:GetText()
-    local sPat, sNew = tostring(sPattern or ""), sTxt:Trim()
-          sNew = (sPat == "") and sNew or sNew:gsub("["..sPat.."]", "X")
+    local sPat, sNew = tostring(sRem or ""), sTxt:Trim()
+          sNew = (sPat == "") and sNew or sNew:gsub(sPat, "X")
     if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
     if(sNew ~= sTxt) then ChangeTooltip(pnSelf) end
     RunConsoleCommand(pnConv, sNew)
@@ -436,8 +444,8 @@ function TOOL.BuildCPanel(panel)
     local ID, pItem = tostring(i)
     pItem = panel:Help(language.GetPhrase("tool."..gsToolModeOP..".lcontr_con").." "..ID)
     pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".lcontr"))
-    setupTextEntry(panel, "uid"        , ID, "%s%W", 17)
-    setupTextEntry(panel, "description", ID, ""    , 20)
+    setupTextEntry(panel, "uid"        , ID, "[%s%W]", 17)
+    setupTextEntry(panel, "description", ID,   nil   , 20)
     pItem = panel:CheckBox(language.GetPhrase("tool."..gsToolModeOP..".analog_con"), gsToolPrefix..ID.."analog")
     pItem:SetTooltip(language.GetPhrase("tool."..gsToolModeOP..".analog"))
     pItem = panel:NumSlider(language.GetPhrase("tool."..gsToolModeOP..".minoff_con"), gsToolPrefix..ID.."min", -10, 10, 0)
