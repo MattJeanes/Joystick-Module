@@ -128,3 +128,15 @@ end
 net.Receive("E2_joystick_getdata",sendJoystickInit)
 
 sendJoystickInit()
+
+E2Helper.Descriptions["joystickAxisCount(e:n)"] = "Returns the player enumerator axes count"
+E2Helper.Descriptions["joystickAxisData(e:)"] = "Returns the player axes data array"
+E2Helper.Descriptions["joystickButtonCount(e:n)"] = "Returns the player enumerator buttons count"
+E2Helper.Descriptions["joystickButtonData(e:)"] = "Returns the player buttons data array"
+E2Helper.Descriptions["joystickCount(e:)"] = "Returns the player enumenators count"
+E2Helper.Descriptions["joystickName(e:n)"] = "Returns the player enumerator name"
+E2Helper.Descriptions["joystickPOVCount(e:n)"] = "Returns the player enumerator POV count"
+E2Helper.Descriptions["joystickPOVData(e:)"] = "Returns the player POV data array"
+E2Helper.Descriptions["joystickRefresh()"] = "Refreshes the player internal joystick state"
+E2Helper.Descriptions["joystickSetActive(e:nn)"] = "Toggles the player enumerator active stream state"
+E2Helper.Descriptions["joystickSetActive(nn)"] = "Toggles the E2 chip entity enumerator active stream state"
