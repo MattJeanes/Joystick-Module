@@ -2,7 +2,7 @@ local gsToolModeOP = TOOL.Mode
 local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
-local MappingFxUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+local gsMappingUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 local gvGhostZero, gaGhostZero = Vector(), Angle()
 
 TOOL.Tab        = "Wire"
@@ -12,7 +12,7 @@ TOOL.Command    = nil
 TOOL.ConfigName = ""
 TOOL.Model      = "models/jaanus/wiretool/wiretool_range.mdl"
 
-if CLIENT then
+if ( CLIENT ) then
 
   TOOL.Information = {
     { name = "info"   , stage = 1},
@@ -55,7 +55,7 @@ end
 for i = 1, 8 do
   local strI = tostring(i)
   TOOL.ClientConVar[strI.."uid"]         = ""
-  TOOL.ClientConVar[strI.."analog"]      = ""
+  TOOL.ClientConVar[strI.."analog"]      = "0"
   TOOL.ClientConVar[strI.."description"] = ""
   TOOL.ClientConVar[strI.."min"]         = "0"
   TOOL.ClientConVar[strI.."max"]         = "1"
@@ -64,17 +64,6 @@ end
 local gtConvarList = TOOL:BuildConVarList()
 
 cleanup.Register( gsToolLimits )
-
---[[
-usermessage.Hook("joywarn",function(um)
-  local t = um:ReadShort()
-  if t == 1 then
-    local _uid = um:ReadString() or ""
-    GAMEMODE:AddNotify("Wire Joystick: UID \"".._uid.."\" in use by another player.",NOTIFY_ERROR,10)
-    surface.PlaySound("buttons/button10.wav")
-  end
-end)
-]]--
 
 local function SanitizeUID(uid)
   local prf, uid = "jm_", tostring(uid)
@@ -93,10 +82,10 @@ local function DeSanitizeUID(uid)
 end
 
 local function GetRandomString(nLen)
-  local nTop, sOut = MappingFxUID:len(), ""
+  local nTop, sOut = gsMappingUID:len(), ""
   for iD = 1, nLen do
     local nRnd = math.random(nTop)
-    sOut = sOut..MappingFxUID:sub(nRnd, nRnd)
+    sOut = sOut..gsMappingUID:sub(nRnd, nRnd)
   end
   return sOut
 end
@@ -129,7 +118,7 @@ function TOOL:GetNormalSpawn(stTr, eEnt)
   local vNorm = Vector(stTr.HitPos)
   local aNorm = stTr.HitNormal:Angle()
         aNorm.pitch = aNorm.pitch + 90
-  if not ( eEnt and eEnt:IsValid() ) then
+  if ( not (eEnt and eEnt:IsValid()) ) then
     return vNorm, aNorm
   end
   vNorm:Set(stTr.HitNormal)
@@ -139,20 +128,20 @@ function TOOL:GetNormalSpawn(stTr, eEnt)
 end
 
 function TOOL:CheckOwnUID(sUID, uNtf, bJM)
-  local ply, stat = self:GetOwner(), 0
-  local wins = jcon and jcon.wireModInstances or nil
+  local oPly, iStat = self:GetOwner(), 0
+  local wins = (jcon and jcon.wireModInstances or nil)
 
   -- Check if the player owns the UID, or if the UID is free
-  if jcon and wins and wins[sUID] then
+  if ( jcon and wins and wins[sUID] ) then
     for k, v in pairs(wins[sUID]) do
-      if v == ply then
-        stat = 1
+      if v == oPly then
+        iStat = 1
       elseif ( bJM and sUID == "jm_" ) then
         -- Maybe some custom override code in later dev..
         -- Allow override, everyone is allowed to use "jm_"
-      elseif stat ~= 1 then
-        stat = 2
-        umsg.Start("joywarn",ply)
+      elseif ( iStat ~= 1 ) then
+        iStat = 2
+        umsg.Start("joywarn", oPly)
           umsg.Short(uNtf)
           umsg.String(sUID)
         umsg.End()
@@ -160,18 +149,19 @@ function TOOL:CheckOwnUID(sUID, uNtf, bJM)
     end
   end
 
-  return stat
+  return iStat
 end
 
 function TOOL:LeftClick(tr)
-  if CLIENT then return true end
-  if (not tr.Hit) then return false end
-  if (not tr.HitPos) then return false end
-  if (tr.Entity:IsPlayer()) then return false end
+  if ( CLIENT ) then return true end
+  if ( not tr.Hit ) then return false end
+  if ( not tr.HitPos ) then return false end
+  if ( tr.Entity:IsPlayer() ) then return false end
 
-  local ply, okuid = self:GetOwner(), true
+  local oPly  , okUID = self:GetOwner(), true
+  local trBone, trEnt = tr.PhysicsBone, tr.Entity
 
-  if (not ply:CheckLimit( gsToolLimits )) then return false end
+  if ( not oPly:CheckLimit( gsToolLimits ) ) then return false end
 
   -- Check all UIDs first so we notify the player of all conflicting UIDs, not just one
   for i = 1, 8 do
@@ -179,12 +169,12 @@ function TOOL:LeftClick(tr)
     local _uid = self:GetControlUID(strI)
 
     -- Check if the player owns the UID, or if the UID is free
-    local stat = self:CheckOwnUID(_uid, 1)
-    if ( stat == 2 and okuid ) then okuid = false end
+    local iStat = self:CheckOwnUID(_uid, 1)
+    if ( iStat == 2 and okUID ) then okUID = false end
   end
 
-  -- Some conflicting UID os not OK then exit
-  if ( not okuid ) then return false end
+  -- Some conflicting UID is not OK then exit
+  if ( not okUID ) then return false end
 
   -- Validate and update
   local pass = {}
@@ -199,7 +189,7 @@ function TOOL:LeftClick(tr)
     local _min, _max = self:GetControlBorder(strI)
 
     -- Check if the player owns the UID, or if the UID is free
-    local stat = self:CheckOwnUID(_uid, 2, true)
+    local iStat = self:CheckOwnUID(_uid, 2, true)
     if ( stat == 2 ) then return false end
 
     table.insert(pass, _uid)
@@ -209,18 +199,18 @@ function TOOL:LeftClick(tr)
     table.insert(pass, _max)
   end
 
-  if (tr.Entity:IsValid() and
-      tr.Entity:GetTable() and
-      tr.Entity:GetTable().pl == ply and
-      tr.Entity:GetClass() == gsSentClasMK) then
-      tr.Entity:Update( unpack(pass) )
+  if ( trEnt:IsValid() and
+       trEnt:GetTable() and
+       trEnt:GetTable().pl == oPly and
+       trEnt:GetClass() == gsSentClasMK) then
+       trEnt:Update( unpack(pass) )
       return true -- If we're updating, exit now
   end
 
   -- Make sure the trace result is not updated
   local vPos, aAng = self:GetNormalSpawn(tr)
-  local eJoystick = MakeWireJoystick_Multi(ply, vPos, aAng, unpack(pass))
-  if not (eJoystick and eJoystick:IsValid()) then return end
+  local eJoystick = MakeWireJoystick_Multi(oPly, vPos, aAng, unpack(pass))
+  if ( not (eJoystick and eJoystick:IsValid()) ) then return end
 
   vPos, aAng = self:GetNormalSpawn(tr, eJoystick)
   eJoystick:SetPos(vPos)
@@ -229,62 +219,62 @@ function TOOL:LeftClick(tr)
   undo.Create("Wire Joystick Multi")
   undo.AddEntity( eJoystick )
 
-  if( constraint.CanConstrain(tr.Entity, 0) ) then
-    local cWeld = WireLib.Weld(eJoystick, tr.Entity, tr.PhysicsBone, true, true)
-    if( cWeld and cWeld:IsValid() ) then
+  if ( constraint.CanConstrain(trEnt, 0) ) then
+    local cWeld = WireLib.Weld(eJoystick, trEnt, trBone, true, true)
+    if ( cWeld and cWeld:IsValid() ) then
       eJoystick:DeleteOnRemove( cWeld )
       undo.AddEntity( cWeld )
     end
   end
 
-  undo.SetPlayer( ply )
+  undo.SetPlayer( oPly )
   undo.Finish()
 
-  ply:AddCount  ( gsToolLimits, eJoystick )
-  ply:AddCleanup( gsToolLimits, eJoystick )
+  oPly:AddCount  ( gsToolLimits, eJoystick )
+  oPly:AddCleanup( gsToolLimits, eJoystick )
 
   return true
 end
 
 function TOOL:RightClick(tr)
-  if CLIENT then return true end
-  local ply = self:GetOwner()
-  if tr.Entity:IsValid() then
-    if (tr.Entity:GetClass() == gsSentClasMK and
-        tr.Entity:GetTable().pl == ply) then
-      local tab = tr.Entity:GetTable()
+  if ( CLIENT ) then return true end
+  local oPly, trEnt = self:GetOwner(), tr.Entity
+  if ( trEnt:IsValid() ) then
+    if ( trEnt:GetTable().pl == oPly and
+         trEnt:GetClass() == gsSentClasMK ) then
+      local tab = trEnt:GetTable()
       local ord = table.GetKeys(gtConvarList); table.sort(ord)
       for iD = 1, #ord do
         local var = ord[iD]
         local key = var:gsub(gsToolPrefix, "")
         local cpy = tostring(tab[key] or "")
-        if (var:sub(-3, -1) == "uid") then
+        if ( var:sub(-3, -1) == "uid" ) then
           cpy = DeSanitizeUID(cpy) -- Desanitize only the UID
         end -- Pass the value in quotes to proces the empty vars also
-        ply:ConCommand(var.." \""..cpy.."\"")
+        oPly:ConCommand(var.." \""..cpy.."\"")
       end
       return true
     end
-  elseif tr.HitWorld then
-    ply:ConCommand("joyconfig")
+  elseif ( tr.HitWorld ) then
+    oPly:ConCommand("joyconfig")
   end
 end
 
 function TOOL:Reload(tr)
-  if CLIENT then return true end
-
-  if (self:GetStage() == 0) and
-      tr.Entity:GetClass() == gsSentClasMK then
-    self.PodCont = tr.Entity
+  if ( CLIENT ) then return true end
+  local trEnt = tr.Entity
+  if ( self:GetStage() == 0 and
+       trEnt:GetClass() == gsSentClasMK ) then
+    self.PodCont = trEnt
     self:SetStage(1)
     return true
-  elseif self:GetStage() == 1 then
+  elseif ( self:GetStage() == 1 ) then
     local tPod = self.PodCont:GetTable()
-    if not tPod or tPod.pl ~= self:GetOwner() then
+    if ( not tPod or tPod.pl ~= self:GetOwner() ) then
       return false
     end
-    if tr.Entity.GetPassenger then
-      self.PodCont:Link(tr.Entity)
+    if ( trEnt.GetPassenger ) then
+      self.PodCont:Link(trEnt)
     else
       self.PodCont:Link()
     end
@@ -296,36 +286,37 @@ function TOOL:Reload(tr)
   end
 end
 
-function TOOL:UpdateGhost( ent, ply )
-  if (not ent or not ent:IsValid()) then return end
+function TOOL:UpdateGhost(oEnt, oPly)
+  if ( not (oEnt and oEnt:IsValid()) ) then return end
 
-  local tr = ply:GetEyeTrace()
+  local tr    = oPly:GetEyeTrace()
+  local trEnt = tr.Entity
 
-  if (not tr.Hit or
-      not tr.Entity or
-          tr.Entity:IsPlayer() or
-          tr.Entity:GetClass() == gsSentClasMK) then
-    ent:SetNoDraw( true ); return
+  if ( not tr.Hit or
+       not trEnt  or
+           trEnt:IsPlayer() or
+           trEnt:GetClass() == gsSentClasMK ) then
+    oEnt:SetNoDraw( true ); return
   end
 
-  local vPos, aAng = self:GetNormalSpawn(tr, ent)
+  local vPos, aAng = self:GetNormalSpawn(tr, oEnt)
 
-  ent:SetPos( vPos )
-  ent:SetAngles( aAng )
-  ent:SetNoDraw( false )
+  oEnt:SetPos( vPos )
+  oEnt:SetAngles( aAng )
+  oEnt:SetNoDraw( false )
 end
 
 function TOOL:Think()
-  if (not self.GhostEntity or
-      not self.GhostEntity:IsValid() or
-          self.GhostEntity:GetModel() ~= self.Model) then
+  if ( not self.GhostEntity or
+       not self.GhostEntity:IsValid() or
+           self.GhostEntity:GetModel() ~= self.Model ) then
     self:MakeGhostEntity( self.Model, gvGhostZero, gaGhostZero )
   end
 
   self:UpdateGhost( self.GhostEntity, self:GetOwner() )
 end
 
-if CLIENT and joystick then
+if ( CLIENT and joystick ) then
   surface.CreateFont("Trebuchet36", {size = 36, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet20", {size = 20, weight = 500, antialias = true, additive = false, font = "trebuchet"})
   surface.CreateFont("Trebuchet12", {size = 12, weight = 500, antialias = true, additive = false, font = "trebuchet"})
@@ -340,21 +331,21 @@ if CLIENT and joystick then
 
   local function drawToolScreen(oTool, nW, nH)
     local w, h = (tonumber(nW) or 256), (tonumber(nH) or 256)
-    local x, y, ply = (w / 2), 36, LocalPlayer()
+    local x, y, oPly = (w / 2), 36, LocalPlayer()
     local s = math.floor((h - y) / 8) -- No black line at the tool screen bottom
     surface.SetDrawColor(clBlack)
     surface.DrawRect(0, 0, w, h)
     draw.DrawText("Joystick Multi Tool", "Trebuchet36", 4, 0, clWhite, 0)
     for i = 1, 8 do
-      if not jcon then return end
+      if ( not jcon ) then return end
       local strI = tostring(i)
       local _uid = oTool:GetControlUID(strI)
       local _type = oTool:GetControlType(strI)
       local reg = jcon.getRegisterByUID(_uid)
-      if reg and reg.IsJoystickReg then
-        if reg:IsBound() then
+      if ( reg and reg.IsJoystickReg ) then
+        if ( reg:IsBound() ) then
           local val = reg:GetValue()
-          if type(val) == "number" then
+          if ( type(val) == "number" ) then
             local _min, _max = oTool:GetControlBorder(strI)
             local disp = w * ((val - reg.min) / (reg.max - reg.min))
             local text = (tonumber(val) or 0) / 255 * (_max - _min) + _min
@@ -363,13 +354,13 @@ if CLIENT and joystick then
             surface.SetDrawColor(clGreen)
             surface.DrawRect(0, y, disp, s)
             draw.DrawText(math.Round(text), "Trebuchet20", x, y, clBlue, 1)
-          elseif type(val) == "boolean" then
+          elseif ( type(val) == "boolean" ) then
             local _min, _max = oTool:GetControlBorder(strI)
             local text = (val and _max or _min)
             surface.SetDrawColor(clRed)
             surface.DrawRect(0, y, w, s)
             surface.SetDrawColor(clGreen)
-            if val then surface.DrawRect(0, y, w, s) end
+            if ( val ) then surface.DrawRect(0, y, w, s) end
             draw.DrawText(text, "Trebuchet20", x, y, clBlue, 1)
           end
           draw.DrawText(reg:GetDeviceName() or "N/A", "Trebuchet12", 4, y + s - 12, clWhite, 0)
@@ -391,7 +382,7 @@ if CLIENT and joystick then
 
   function TOOL:DrawToolScreen(w, h)
     local b, e = pcall(drawToolScreen, self, w, h)
-    if not b then ErrorNoHalt(e,"\n") end
+    if ( not b ) then ErrorNoHalt(e,"\n") end
   end
 end
 
@@ -403,8 +394,8 @@ local function setupTextEntry(pnBase, sName, sID, sRem, nLen)
     local sTxt = pnSelf:GetText()
     local sPat, sNew = tostring(sRem or ""), sTxt:Trim()
           sNew = (sPat == "") and sNew or sNew:gsub(sPat, "X")
-    if(sTxt:len() > nLen) then sNew = sNew:sub(1, nLen) end
-    if(sNew ~= sTxt) then ChangeTooltip(pnSelf) end
+    if ( sTxt:len() > nLen ) then sNew = sNew:sub(1, nLen) end
+    if ( sNew ~= sTxt ) then ChangeTooltip(pnSelf) end
     RunConsoleCommand(pnConv, sNew)
   end
   pnText.AllowInput = function(pnSelf, chData)
@@ -416,7 +407,7 @@ local function setupTextEntry(pnBase, sName, sID, sRem, nLen)
   pnText.OnEnter = function(pnSelf)
     local sTxt = pnSelf:GetText()
     local nEnd = math.floor(tonumber(sTxt) or 0)
-    if(nEnd <= 0) then return end
+    if ( nEnd <= 0 ) then return end
     local sRnd = GetRandomString(math.min(nEnd, nLen))
     pnSelf:SetText(sRnd)
     RunConsoleCommand(pnConv, sRnd)
