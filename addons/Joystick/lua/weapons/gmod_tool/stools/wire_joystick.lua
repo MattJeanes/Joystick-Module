@@ -53,7 +53,7 @@ if (SERVER) then
 end
 
 TOOL.ClientConVar["uid"]         = ""
-TOOL.ClientConVar["analog"]      = ""
+TOOL.ClientConVar["analog"]      = "0"
 TOOL.ClientConVar["description"] = ""
 TOOL.ClientConVar["min"]         = "0"
 TOOL.ClientConVar["max"]         = "1"
