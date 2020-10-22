@@ -411,7 +411,6 @@ function TOOL.BuildCPanel(panel)
   panel:ClearControls()
   local pnPresets = vgui.Create("ControlPresets", panel)
         pnPresets:SetPreset(gsToolModeOP)
-        pnPresets:UpdateColours(panel:GetSkin())
         pnPresets:AddOption("Default", gtConvarList)
         for key, val in pairs(table.GetKeys(gtConvarList)) do
           pnPresets:AddConVar(val) end
