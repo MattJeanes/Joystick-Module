@@ -55,7 +55,7 @@ end
 for i = 1, 8 do
   local strI = tostring(i)
   TOOL.ClientConVar[strI.."uid"]         = ""
-  TOOL.ClientConVar[strI.."analog"]      = ""
+  TOOL.ClientConVar[strI.."analog"]      = "0"
   TOOL.ClientConVar[strI.."description"] = ""
   TOOL.ClientConVar[strI.."min"]         = "0"
   TOOL.ClientConVar[strI.."max"]         = "1"
