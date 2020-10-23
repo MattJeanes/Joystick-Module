@@ -48,7 +48,7 @@ if ( CLIENT ) then
   language.Add( "cleaned_" .. gsToolLimits               , "Cleaned up all Joystick Multi chips!" )
 end
 
-if SERVER then
+if ( SERVER ) then
   CreateConVar("sbox_max"..gsToolLimits, 20)
 end
 
@@ -133,18 +133,18 @@ function TOOL:CheckOwnUID(sUID, uNtf, bJM)
 
   -- Check if the player owns the UID, or if the UID is free
   if ( jcon and wins and wins[sUID] ) then
-    for k, v in pairs(wins[sUID]) do
-      if v == oPly then
+    for k, v in pairs( wins[sUID] ) do
+      if ( v == oPly ) then
         iStat = 1
       elseif ( bJM and sUID == "jm_" ) then
         -- Maybe some custom override code in later dev..
         -- Allow override, everyone is allowed to use "jm_"
       elseif ( iStat ~= 1 ) then
         iStat = 2
-        umsg.Start("joywarn", oPly)
-          umsg.Short(uNtf)
-          umsg.String(sUID)
-        umsg.End()
+        net.Start(gsToolPrefix.."joywarn", oPly)
+          net.WriteUInt(uNtf, 4)
+          net.WriteString(sUID)
+        net.Send(oPly)
       end
     end
   end
