@@ -52,6 +52,21 @@ if (SERVER) then
   CreateConVar("sbox_max"..gsToolLimits, 20)
 end
 
+if (SERVER) then
+  util.AddNetworkString(gsToolPrefix.."joywarn")
+else
+  net.Receive(gsToolPrefix.."joywarn", function(nLen)
+    local iD, sUID = net.ReadUInt(4), net.ReadString()
+    if ( iD == 1 ) then
+      GAMEMODE:AddNotify("Wire Joystick: UID in use by another player.", NOTIFY_ERROR, 10)
+      surface.PlaySound("buttons/button10.wav")
+    elseif ( iD == 2 ) then
+      GAMEMODE:AddNotify("Wire Joystick: UID ["..sUID.."] in use by another player.", NOTIFY_ERROR, 10)
+      surface.PlaySound("buttons/button10.wav")
+    end
+  end)
+end
+
 TOOL.ClientConVar["uid"]         = ""
 TOOL.ClientConVar["analog"]      = "0"
 TOOL.ClientConVar["description"] = ""
@@ -61,17 +76,6 @@ TOOL.ClientConVar["max"]         = "1"
 local gtConvarList = TOOL:BuildConVarList()
 
 cleanup.Register( gsToolLimits )
-
-usermessage.Hook("joywarn", function(um)
-  local t = um:ReadShort()
-  if ( t == 1 ) then
-    GAMEMODE:AddNotify("Wire Joystick: UID in use by another player.", NOTIFY_ERROR, 10)
-    surface.PlaySound("buttons/button10.wav")
-  elseif ( t == 2 ) then
-    GAMEMODE:AddNotify("Wire Joystick: UID ",um:ReadString()," in use by another player.", NOTIFY_ERROR, 10)
-    surface.PlaySound("buttons/button10.wav")
-  end
-end)
 
 local function SanitizeUID(uid)
   local prf, uid = "jm_", tostring(uid)
@@ -149,10 +153,10 @@ function TOOL:CheckOwnUID(sUID, uNtf, bJM)
         -- Allow override, everyone is allowed to use "jm_"
       elseif ( iStat ~= 1 ) then
         iStat = 2
-        umsg.Start("joywarn", oPly)
-          umsg.Short(uNtf)
-          umsg.String(sUID)
-        umsg.End()
+        net.Start(gsToolPrefix.."joywarn", oPly)
+          net.WriteUInt(uNtf, 4)
+          net.WriteString(sUID)
+        net.Send(oPly)
       end
     end
   end
@@ -163,6 +167,7 @@ end
 function TOOL:LeftClick(tr)
   if ( CLIENT ) then return true end
   if ( not tr.Hit ) then return false end
+  if ( not tr.HitPos ) then return false end
   if ( tr.Entity:IsPlayer() ) then return false end
 
   local trBone = tr.PhysicsBone
