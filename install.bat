@@ -31,7 +31,7 @@ xcopy /v /y "%joymodInstall%lua\bin\*.dll" "lua\bin"
 xcopy /v /y /s "%joymodInstall%addons" "addons"
 
 echo Joystick module has been installed !
-echo Please remove the clonned repo manually !
+echo Please remove the cloned repo manually !
 
 cd /d "%joymodInstall%"
 
