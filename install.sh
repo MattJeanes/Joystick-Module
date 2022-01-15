@@ -43,7 +43,7 @@ else
   then
     rm -rf "$repopath"
   else
-    echo "Please remove the clonned repo manually !"
+    echo "Please remove the cloned repo manually !"
   fi
 fi
 
