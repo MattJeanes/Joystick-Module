@@ -7,7 +7,7 @@ set "joymodInstall=%~dp0"
 
 :: Clean install parameter
 
-set /p joymodClean="Perform clean install [y/N] ? "
+set /p joymodClean="Install joystick module [y/N]?"
 
 cd /d "%joymodInstall%"
 cd ..\..
@@ -30,8 +30,8 @@ if not exist "lua\bin" mkdir lua\bin
 xcopy /v /y "%joymodInstall%lua\bin\*.dll" "lua\bin"
 xcopy /v /y /s "%joymodInstall%addons" "addons"
 
-echo Joystick module has been installed !
-echo Please remove the cloned repo manually !
+echo Joystick module has been installed!
+echo Please remove the cloned repo manually!
 
 cd /d "%joymodInstall%"
 
