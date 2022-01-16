@@ -7,7 +7,7 @@ gmodpath=$(dirname "$repopath")
 gmodpath=$(dirname "$gmodpath")
 boolrvar=""
 
-read -p "Perform clean install [y/N] ? " boolrvar
+read -p "Install joystick module [y/N]?" boolrvar
 if test "$boolrvar" == "y"
 then
   rm -rf "${gmodpath}/addons/${repoitem}"
@@ -32,9 +32,9 @@ cd ${gmodpath}
 cp -rfp $repopath/addons/. $gmodpath/addons
 cp -rfp $repopath/lua/bin/. $gmodpath/lua/bin
 
-echo "Joystick module has been installed !"
+echo "Joystick module has been installed!"
 
-read -p "Remove the cloned repository [y/N] ? " boolrvar
+read -p "Remove the cloned repository [y/N]?" boolrvar
 if test "$boolrvar" == "y"
 then
   rm -rf "$repopath"
@@ -43,7 +43,7 @@ else
   then
     rm -rf "$repopath"
   else
-    echo "Please remove the cloned repo manually !"
+    echo "Please remove the cloned repo manually!"
   fi
 fi
 

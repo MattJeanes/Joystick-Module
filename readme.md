@@ -1,7 +1,7 @@
 Joystick-Module
 ===============
 
-A [joystick module][ref-joymod] for GMod, made originally by [NightEagle][ref-author]
+A [joystick module][ref-joymod] for GMod, originally made by [NightEagle][ref-author]
 
 The original [facepunch thread][ref-thread]
 
@@ -9,21 +9,21 @@ Installation
 ===============
 
 ## Manually
-Merge the [`addons`][ref-addons] and [`lua`][ref-luabin] folders from this folder into your `garrysmod` folder.
+Merge the [`addons`][ref-addons] and [`lua`][ref-luabin] directories from this repo into your `garrysmod` directory.
 
 ## Automatically
 
 #### Windows:
-  1. Clone the repository inside `..\garrysmod\addons`
-  2. Run the [`install.bat`][ref-winstall] installation script
-  3. Delete the [`cloned repository`][ref-repo] **_manually_** !
+  1. Clone the repository inside `..\garrysmod\addons`.
+  2. Run the [`install.bat`][ref-winstall] installation script.
+  3. Delete the [`cloned repository`][ref-repo] **_manually_**!
   
 #### Linux:
-  1. Clone the repository inside `../garrysmod/addons`
-  2. Right click in the cloned folder. `Open in therminal`
-  3. Run `sudo chmod +x install.sh` and write your password
-  4. Run the [`./install.sh`][ref-linstall] installation script
-  5. Auto-remove the cloned repository by anwering `y` or else for manual
+  1. Clone the repository inside `../garrysmod/addons`.
+  2. Open a terminal, navigate to the cloned repository directory.
+  3. Execute `sudo chmod +x install.sh`.
+  4. Execute the [`install script`][ref-linstall] installation script by running `./install.sh`.
+  5. Auto-remove the cloned repository by answering `y`, alternatively, press `n` to remove the cloned repository manually.
      
 [ref-repo]: https://github.com/MattJeanes/Joystick-Module
 [ref-winstall]: https://github.com/MattJeanes/Joystick-Module/blob/master/install.bat
