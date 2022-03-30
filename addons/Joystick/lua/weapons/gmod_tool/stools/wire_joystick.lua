@@ -105,7 +105,7 @@ end
 function TOOL:GetControlUID(bVal)
   local out = SanitizeUID(self:GetClientInfo("uid"))
   if ( bVal ) then -- Force validation of UID
-    local ok, err = jcon.isValidUID(out)
+    local ok, err = jcon.isValidUID(out, gsMappingUID)
     if ( not ok ) then out = nil
       ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
     end -- Validate the UID when requested

@@ -2,6 +2,44 @@
 // Version 28
 // Written by Night-Eagle
 local jcon_version = 28
+local jcon_charset = [[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,.<>?:[]{}\|1234567890-=!@#$%^&*()_+]]
+local jcon_banlist = {
+	-- UID contains "ent_"
+	"ent_",
+	-- Garry's rules, not mine
+	"sv_cheats",
+	"_restart",
+	"exec",
+	"condump",
+	"bind",
+	"alias",
+	"ent_fire",
+	"ent_setname",
+	"sensitivity",
+	"name",
+	"r_aspect",
+	"quit",
+	"quti",
+	"exit",
+	"lua_run",
+	"lua_run_cl",
+	"lua_open",
+	"lua_cookieclear",
+	"lua_showerrors_cl",
+	"lua_showerrors_sv",
+	"lua_showerrors_sv",
+	"lua_openscript",
+	"lua_openscript_cl",
+	"lua_redownload",
+	"sent_reload",
+	"sent_reload_cl",
+	"swep_reload",
+	"swep_reload_cl",
+	"gamemode_reload",
+	"gamemode_reload_cl",
+	"con_logfile",
+	"clear",
+}
 
 /*
 
@@ -2984,63 +3022,31 @@ end
 
 //DUPLICATED CODE ON SERVERSIDE, WARNING
 
-jcon.isValidUID = function(uid)
+jcon.isValidUID = function(uid, set)
+	-- Check valid string type only
 	if type(uid) ~= "string" then
-		return false,"uid is not a string"
+		return false, "UID is not a string"
 	end
-	if uid:len() > 20 then
-		return false,"uid is longer than 20 characters"
+	-- Retrieve UID and character set
+	local ulen = uid:len()
+	local uset = tostring(set or jcon_charset)
+	-- Check UID length
+	if ulen > 20 then
+		return false,"UID is longer than 20 characters"
 	end
-	for k,v in pairs(string.Explode("",uid)) do
-		if not string.find([[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,.<>?:[]{}\|1234567890-=!@#$%^&*()_+]],v) then
-			return false,"uid contains an illegal character"
+	-- Check if the UID contains illegal character
+	for i = 1, ulen do
+		if not uset:find(uid:sub(i,i)) then
+			return false,"UID contains an illegal character"
 		end
 	end
-	if string.find(uid,"ent_") then
-		return false,"uid contains \"ent_\""
-	end
-	
-	//Garry's rules, not mine
-	local banlist = {
-		"sv_cheats",
-		"_restart",
-		"exec",
-		"condump",
-		"bind",
-		"alias",
-		"ent_fire",
-		"ent_setname",
-		"sensitivity",
-		"name",
-		"r_aspect",
-		"quit",
-		"quti",
-		"exit",
-		"lua_run",
-		"lua_run_cl",
-		"lua_open",
-		"lua_cookieclear",
-		"lua_showerrors_cl",
-		"lua_showerrors_sv",
-		"lua_showerrors_sv",
-		"lua_openscript",
-		"lua_openscript_cl",
-		"lua_redownload",
-		"sent_reload",
-		"sent_reload_cl",
-		"swep_reload",
-		"swep_reload_cl",
-		"gamemode_reload",
-		"gamemode_reload_cl",
-		"con_logfile",
-		"clear",
-	}
-	for k,v in pairs(banlist) do
+	-- Check if present in the BAN list
+	for k, v in pairs(jcon_banlist) do
 		if uid:find(v) then
 			ErrorNoHalt("WARNING: UID contains \"" .. v .. "\", and may cause the joystick module to fail.")
 		end
 	end
-	
+	-- UID is valid
 	return true
 end
 
