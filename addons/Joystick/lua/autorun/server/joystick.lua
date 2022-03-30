@@ -221,7 +221,7 @@ jcon.isValidUID = function(uid, set)
   end
   -- Check if the UID contains illegal character
   for i = 1, ulen do
-    if not uset:find(uid:sub(i,i)) then
+    if not uset:find(uid:sub(i,i), 1, true) then
       return false,"UID contains an illegal character"
     end
   end
