@@ -222,7 +222,7 @@ jcon.isValidUID = function(uid, set)
   -- Check if the UID contains illegal character
   for i = 1, ulen do local c = uid:sub(i,i)
     if not uset:find(c, 1, true) then
-      return false,"UID ["..uid.."] contains ["..c.."] illegal character!"
+      return false,"UID ["..uid.."] contains \'"..c.."\' illegal character!"
     end
   end
   -- Check if present in the BAN list
