@@ -3025,25 +3025,25 @@ end
 jcon.isValidUID = function(uid, set)
   -- Check valid string type only
   if type(uid) ~= "string" then
-    return false, "UID is not a string"
+    return false, "UID ["..tostring(uid).."] is not a string!"
   end
   -- Retrieve UID and character set
   local ulen = uid:len()
   local uset = tostring(set or jcon_charset)
   -- Check UID length
   if ulen > 20 then
-    return false,"UID is longer than 20 characters"
+    return false,"UID ["..uid.."] is longer than 20 characters!"
   end
   -- Check if the UID contains illegal character
-  for i = 1, ulen do
-    if not uset:find(uid:sub(i,i), 1, true) then
-      return false,"UID contains an illegal character"
+  for i = 1, ulen do local c = uid:sub(i,i)
+    if not uset:find(c, 1, true) then
+      return false,"UID ["..uid.."] contains ["..c.."] illegal character!"
     end
   end
   -- Check if present in the BAN list
   for k, v in pairs(jcon_banlist) do
     if uid:find(v) then
-      ErrorNoHalt("WARNING: UID contains \"" .. v .. "\", and may cause the joystick module to fail.")
+      ErrorNoHalt("WARNING: UID ["..uid.."] contains \"" .. v .. "\", and may cause the joystick module to fail.\n")
     end
   end
   -- UID is valid
