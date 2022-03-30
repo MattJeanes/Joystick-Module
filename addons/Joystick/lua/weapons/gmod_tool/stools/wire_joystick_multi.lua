@@ -2,7 +2,7 @@ local gsToolModeOP = TOOL.Mode
 local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
-local gsMappingUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+local gsMappingUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 local gvGhostZero, gaGhostZero = Vector(), Angle()
 
 TOOL.Tab        = "Wire"
