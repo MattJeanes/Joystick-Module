@@ -2,7 +2,7 @@ local gsToolModeOP = TOOL.Mode
 local gsToolPrefix = gsToolModeOP.."_"
 local gsToolLimits = gsToolModeOP:gsub("_multi", "").."s"
 local gsSentClasMK = "gmod_"..gsToolModeOP
-local gsMappingUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+local gsMappingUID = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 local gvGhostZero, gaGhostZero = Vector(), Angle()
 
 TOOL.Tab        = "Wire"
@@ -93,7 +93,7 @@ end
 function TOOL:GetControlUID(sIdx, bVal)
   local out = SanitizeUID(self:GetClientInfo(sIdx.."uid"))
   if ( bVal ) then -- Force validation of UID
-    local ok, err = jcon.isValidUID(out)
+    local ok, err = jcon.isValidUID(out, gsMappingUID)
     if ( not ok ) then out = nil
       ErrorNoHalt("Wire Joystick: "..tostring(err).."\n")
     end -- Validate the UID when requested
