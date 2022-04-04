@@ -15,15 +15,15 @@ Merge the [`addons`][ref-addons] and [`lua`][ref-luabin] directories from this r
 
 #### Windows:
   1. Clone the repository inside `..\garrysmod\addons`.
-  2. Run the [`install.bat`][ref-winstall] installation script.
+  2. Execute the [`install.bat`][ref-winstall] installation script.
   3. Delete the [`cloned repository`][ref-repo] **_manually_**!
   
 #### Linux:
   1. Clone the repository inside `../garrysmod/addons`.
-  2. Open a terminal, navigate to the cloned repository directory.
+  2. Open the cloned repository folder in the [`terminal`][ref-terminal].
   3. Execute `sudo chmod +x install.sh`.
-  4. Execute the [`install script`][ref-linstall] installation script by running `./install.sh`.
-  5. Auto-remove the cloned repository by answering `y`, alternatively, press `n` to remove the cloned repository manually.
+  4. Execute the [`./install.sh`][ref-linstall] installation script.
+  5. Delete the [`cloned repository`][ref-repo] by answering `Y/y` to the [`terminal`][ref-terminal] prompt.
      
 [ref-repo]: https://github.com/MattJeanes/Joystick-Module
 [ref-winstall]: https://github.com/MattJeanes/Joystick-Module/blob/master/install.bat
@@ -33,3 +33,5 @@ Merge the [`addons`][ref-addons] and [`lua`][ref-luabin] directories from this r
 [ref-joymod]: https://components101.com/modules/joystick-module
 [ref-addons]: https://github.com/MattJeanes/Joystick-Module/tree/master/addons
 [ref-luabin]: https://github.com/MattJeanes/Joystick-Module/tree/master/lua
+[ref-terminal]: https://linuxcommand.org/
+
