@@ -392,7 +392,7 @@ local function setupTextEntry(pnBase, sName, sRem, nLen)
     RunConsoleCommand(pnConv, sNew)
   end
   pnText.AllowInput = function(pnSelf, chData)
-    return ((pnSelf:GetText():len() >= nLen) and true or false)
+    return (pnSelf:GetText():len() > nLen)
   end
   pnText.OnLoseFocus = function(pnSelf)
     pnSelf:SetText(DeSanitizeUID(GetConVar(pnConv):GetString()))
